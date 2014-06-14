@@ -52,7 +52,7 @@ namespace AVP_UART0 {
   }
 } // namespace AVP_UART0
 
-#ifder UART1_EXISTS
+#ifdef UART1_EXISTS
 namespace AVP_UART1 {
   enum StatusBits { OVERRAN, UPE = UPE1, DOR, FE };
   static inline void EnableTX_Interrupt() { UCSR1B |= (1<<UDRIE1); }

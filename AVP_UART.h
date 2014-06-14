@@ -20,7 +20,7 @@ namespace AVP_UART0 {
 	#include "AVP_UART_insert.h"
 }
 
-#ifder UART1_EXISTS
+#ifdef UART1_EXISTS
 namespace AVP_UART1 {
 	#include "AVP_UART_insert.h"
 }
