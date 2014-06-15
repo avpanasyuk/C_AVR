@@ -6,6 +6,7 @@
  */
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <stdint.h>
 #include <General.h>
 #include <CircBuffer.h>
@@ -19,7 +20,7 @@ namespace AVP_UART0 {
 #include "AVP_UART_CPP_insert.h"
 
   uint32_t Init(uint32_t baud) {
-    PRR0 &= ~(1<<PRUSART0);
+    PRR &= ~(1<<PRUSART0);
 
     UBRR0 = avp::RoundRatio(F_CPU,baud<<4)-1;
 
@@ -30,7 +31,7 @@ namespace AVP_UART0 {
     return avp::RoundRatio(F_CPU,uint32_t(UBRR0+1)<<4);
   }
 
-  ISR(USART0_RX_vect) {
+  ISR(USART_RX_vect) {
     if(BufferRX.LeftToWrite()) {
       StatusRX |= (7<<UPE0) & UCSR0A; // checks whether serial protocol OK
       BufferRX.Write(UDR0); 
@@ -43,7 +44,7 @@ namespace AVP_UART0 {
   } // if buffer is overran it will produce
 
   // we have top free buffer first and then pointer. Until pointer is freed we can not write any more 
-  ISR(USART0_UDRE_vect) {
+  ISR(USART_UDRE_vect) {
     if(BufferTX.LeftToRead()) UDR0 = BufferTX.Read();
     else if(TX_Size) { // circular buffer is empty and now block pointer
       UDR0 = *(TX_Ptr++);
@@ -52,7 +53,7 @@ namespace AVP_UART0 {
   }
 } // namespace AVP_UART0
 
-#ifdef UART1_EXISTS
+#ifdef PRUSART1
 namespace AVP_UART1 {
   enum StatusBits { OVERRAN, UPE = UPE1, DOR, FE };
   static inline void EnableTX_Interrupt() { UCSR1B |= (1<<UDRIE1); }

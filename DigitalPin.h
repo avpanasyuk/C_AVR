@@ -41,6 +41,33 @@ const static pin_map_t pinMap[] = {
   {&DDRC, &PINC, &PORTC, 5}   // C5 19
 };
 //------------------------------------------------------------------------------
+#elif defined(__AVR_ATmega88A__)
+const static pin_map_t pinMap[] = {
+	{&DDRD, &PIND, &PORTD, 0},  // D0  0
+	{&DDRD, &PIND, &PORTD, 1},  // D1  1
+	{&DDRD, &PIND, &PORTD, 2},  // D2  2
+	{&DDRD, &PIND, &PORTD, 3},  // D3  3
+	{&DDRD, &PIND, &PORTD, 4},  // D4  4
+	{&DDRD, &PIND, &PORTD, 5},  // D5  5
+	{&DDRD, &PIND, &PORTD, 6},  // D6  6
+	{&DDRD, &PIND, &PORTD, 7},  // D7  7
+	{&DDRB, &PINB, &PORTB, 0},  // B0  8
+	{&DDRB, &PINB, &PORTB, 1},  // B1  9
+	{&DDRB, &PINB, &PORTB, 2},  // B2 10
+	{&DDRB, &PINB, &PORTB, 3},  // B3 11
+	{&DDRB, &PINB, &PORTB, 4},  // B4 12
+	{&DDRB, &PINB, &PORTB, 5},  // B5 13
+	{&DDRB, &PINB, &PORTB, 6},  // B5 14
+	{&DDRB, &PINB, &PORTB, 7},  // B5 15
+	{&DDRC, &PINC, &PORTC, 0},  // C0 16
+	{&DDRC, &PINC, &PORTC, 1},  // C1 17
+	{&DDRC, &PINC, &PORTC, 2},  // C2 18
+	{&DDRC, &PINC, &PORTC, 3},  // C3 19
+	{&DDRC, &PINC, &PORTC, 4},  // C4 20
+	{&DDRC, &PINC, &PORTC, 5},   // C5 21
+	{&DDRC, &PINC, &PORTC, 6}   // C5 22
+};
+//------------------------------------------------------------------------------
 #elif defined(__AVR_ATmega1280__)\
 || defined(__AVR_ATmega2560__)
 // Mega

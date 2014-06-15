@@ -1,15 +1,16 @@
 /*
- * SqrWaveGen.cpp
+ * ATmega1284P_Timers.cpp
  *
- * Created: 10/26/2013 7:56:54 PM
+ * Created: 6/14/2014 9:02:24 PM
  *  Author: panasyuk
- */
+ */ 
+#ifdef __AVR_ATmega1284__
 
-#include "SqrWave.h"
+#include "ATmega1284P_Timers.h"
 
 constexpr uint8_t Timer0::Prescalers[];
 constexpr uint8_t Timer1::Prescalers[];
 constexpr uint8_t Timer2::Prescalers[];
 constexpr uint8_t Timer3::Prescalers[];
-template<> constexpr uint8_t Timer<uint8_t>::Width;
-template<> constexpr uint8_t Timer<uint16_t>::Width;
+
+#endif

@@ -16,11 +16,15 @@
 // we STORE a pointer to it and hope it will be valid until sent. After this we can not write any more unless we free buffer first and
 // then pointer.
 
+#ifndef PRR0
+#define PRR0 PRR
+#endif
+
 namespace AVP_UART0 {
 	#include "AVP_UART_insert.h"
 }
 
-#ifdef UART1_EXISTS
+#ifdef PRUSART1
 namespace AVP_UART1 {
 	#include "AVP_UART_insert.h"
 }

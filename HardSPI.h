@@ -15,6 +15,10 @@
 #include "DigitalPin.h"
 
 class SPI_Wrapper { static uint8_t Nested; };
+	
+#ifndef PRR0 
+	#define PRR0 PRR
+#endif	
 
 template<uint8_t nSS, uint8_t CLK, uint8_t MOSI, uint8_t MISO> class tSPI {
 public:
