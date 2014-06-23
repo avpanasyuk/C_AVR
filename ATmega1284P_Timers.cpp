@@ -1,9 +1,9 @@
 /*
- * ATmega1284P_Timers.cpp
- *
- * Created: 6/14/2014 9:02:24 PM
- *  Author: panasyuk
- */ 
+* ATmega1284P_Timers.cpp
+*
+* Created: 6/14/2014 9:02:24 PM
+*  Author: panasyuk
+*/
 #ifdef __AVR_ATmega1284__
 
 #include "ATmega1284P_Timers.h"

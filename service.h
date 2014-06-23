@@ -28,9 +28,6 @@ extern "C" int __cxa_atexit();
 /** nop for timing */
 #define NOP asm volatile ("nop\n\t")
 
-extern "C" int32_t SetRectWave(uint8_t TimerI, uint32_t Freq); // from SqrWaveGen
-// returns -1 if frequency can not be generated, or true frequency otherwise
-
 class ISR_Blocker {
   uint8_t oldSREG;
 public:
