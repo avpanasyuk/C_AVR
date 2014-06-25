@@ -18,7 +18,7 @@
 
 template<class TimerX> class SqrWave {
 	public:
-	static void Init() { TimerX::Init(); }
+	static void Init() { TimerX::InitCTC(); }
 
 	static uint32_t GetFreq(typename TimerX::Params Codes) {
 		return avp::RoundRatio<uint32_t>(F_CPU >> (TimerX::Prescalers[Codes.PrescalerInd-1]+1),
@@ -55,7 +55,7 @@ template<class TimerX> class SqrWave {
    *  CountTo - specifies divider as CountTo + 1
    */
   static void SetFreqByCodes(typename TimerX::Params Codes) {
-		TimerX::Setup(Codes);
+		TimerX::SetupCTC(Codes);
 	}	// SetFreqByCodes
 
 	static uint32_t SetFreq(uint32_t Freq) {

@@ -14,6 +14,7 @@
 #endif
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "Timer.h"
 
 class Timer0: public Timer<uint8_t> {
@@ -53,7 +54,7 @@ struct Timer1: public Timer<uint16_t> {
 		OCR1A = Codes.CountTo;
 	}
 	
-	static volatile uint16_t * constexpr pTCNT() { return &TCNT1; }
+	static constexpr volatile uint16_t *pTCNT() { return &TCNT1; }
 }; // Timer1
 
 struct Timer2: public Timer<uint8_t> {
@@ -69,8 +70,5 @@ struct Timer2: public Timer<uint8_t> {
 		OCR2A = Codes.CountTo;
 	}
 }; // Timer2
-
-
-
 
 #endif /* ATMEGA88A_TIMERS_H_ */
