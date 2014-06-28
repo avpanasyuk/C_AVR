@@ -41,11 +41,11 @@ template<class _Timer> struct TimeCounter {
 	/*! Ok, so our tick is a microsecond or smaller, so what is it in nanoseconds */
 	static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> _Timer::Prescalers[FindPrescalerI()]);
 	static constexpr uint16_t Log2TicksInKibitick = avp::RoundLog2Ratio(1000000UL,NanosecondsInTick); // almost always 10
-	static constexpr uint16_t MicrosecondsInKibitick = (NanosecondsInTick << Log2TicksInKibitick)/1000UL;
+	static constexpr uint16_t MicrosecondsInKibitick = (uint32_t(NanosecondsInTick) << Log2TicksInKibitick)/1000UL;
 	static constexpr uint16_t ClocksInKibitick = 1U << (Log2ClocksInTick+Log2TicksInKibitick);
 	static volatile uint32_t Kibiticks;  // something close to a millisecond, may be up to 40% off
 	
-	static void InterruptHandler() {
+	static void InterruptHandler() __attribute__((always_inline)) {
 		while(*_Timer::pTCNT() > ClocksInKibitick) {
 			*_Timer::pTCNT() -= ClocksInKibitick;
 			Kibiticks++;
@@ -57,14 +57,16 @@ template<class _Timer> struct TimeCounter {
 	static uint32_t _ticks() { return (Kibiticks << Log2TicksInKibitick) + (*_Timer::pTCNT() >> Log2ClocksInTick); }
 	static uint32_t ticks() { ISR_Blocker Auto; return _ticks(); }
 	static uint32_t kibiticks() { return Kibiticks; }
-	void delayTicks(uint32_t delay) { // delay < UINT32_MAX/2
+	static void delayTicks(uint32_t delay) { // delay < UINT32_MAX/2
 		uint32_t Till = ticks() + delay;
 		while(ticks()-Till > UINT32_MAX/2);
 	} // delayTicks
-	void delayKibiticks(uint32_t delay) { // delay < UINT32_MAX/2
+	static void delayKibiticks(uint32_t delay) { // delay < UINT32_MAX/2
 		uint32_t Till = kibiticks() + delay;
 		while(kibiticks()-Till > UINT32_MAX/2);
-	} // delayTicks	
+	} // delayTicks
+	
+	TimeCounter() { Init(); }	// this constructor only to call Init() automatically
 }; // TimeCounter
 
 #define DEFINE_TIME(TimerI) typedef TimeCounter<_COMB2(Timer,TimerI)> Time; \
@@ -74,7 +76,8 @@ template<class _Timer> struct TimeCounter {
  // initiates static Time class, should be called once in CPP file
 #define INIT_TIME(TimerI) \
 ISR(_COMB(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
-template<> volatile uint32_t Time::Kibiticks = 0; 	
+template<> volatile uint32_t Time::Kibiticks = 0; \
+Time __Time_Init___; 	
 
 //! @tparam T should be unsigned!
 template<uint32_t (*TickFunction)(), typename T=uint32_t> class TimeOut {

@@ -16,7 +16,7 @@
 #include <avr/io.h>
 #include "Timer.h"
 
-class Timer0: public Timer<uint8_t> {
+struct Timer0: public Timer<uint8_t> {
 	static constexpr uint8_t Prescalers[] = {0,3,6,8,10}; // powers of 2
 
 	static void InitCTC() {
@@ -44,7 +44,7 @@ struct Timer1: public Timer<uint16_t> {
 		OCR1A = ClocksInKibitick; // we do interrupt when we count to about a  millisecond
 		TIMSK1 |= (1<<OCIE1A); // enable compare interrupts
 		TCCR1A = 0;
-		TCCR1B = (PrescalerI<<CS10); // Normal mode, we count top 0xFFFF, prescaler by 8
+		TCCR1B = (PrescalerI+1)<<CS10;  // PrescalerI is 1-based, because value 0 turns it off 
 		sei();
 	} // Init
 
@@ -79,13 +79,14 @@ struct Timer3: public Timer<uint16_t> {
 		TCCR3A = (1<<COM3A0);  // toggle OC0A on compare match, set CTC (count to OCR0A) mode,
 	}
 
+	
 	static void InitTimeCounter(uint16_t ClocksInKibitick, uint8_t PrescalerI) {
 		// OK, we build time counter on 16-bits timer 3
 		PRR1 &= ~(1<<PRTIM3); // turn on power on the counter
 		OCR3A = ClocksInKibitick; // we do interrupt when we count to about a  millisecond
 		TIMSK3 |= (1<<OCIE3A); // enable compare interrupts
 		TCCR3A = 0;
-		TCCR3B = (PrescalerI<<CS30); // Normal mode, we count top 0xFFFF, prescaler by 8
+		TCCR3B = (PrescalerI+1)<<CS30; //!  PrescalerI is 1-based, because value 0 turns it off 
 		sei();
 	} // Init
 

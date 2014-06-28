@@ -15,10 +15,14 @@
 #ifdef __AVR_ATmega1284__
 #include "ATmega1284P_Timers.h"
 #endif
+#ifdef __AVR_ATmega88A__
+#include "ATmega88A_Timers.h"
+#endif
 
 template<class TimerX> class SqrWave {
 	public:
 	static void Init() { TimerX::InitCTC(); }
+	SqrWave() { Init(); } // just to call init when initiating static object
 
 	static uint32_t GetFreq(typename TimerX::Params Codes) {
 		return avp::RoundRatio<uint32_t>(F_CPU >> (TimerX::Prescalers[Codes.PrescalerInd-1]+1),
