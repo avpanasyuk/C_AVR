@@ -42,7 +42,7 @@ template<class TimerX> class SqrWave {
 		// the rest of the divider fits into Counter
 		while(MinPrescaler >> TimerX::Prescalers[Out.PrescalerInd++]) {
 			#ifdef DEBUG
-			if(Out.PrescalerInd > N_ELEMENTS(TimerX::Prescalers)) {
+			if(Out.PrescalerInd >= N_ELEMENTS(TimerX::Prescalers)) {
 				*pFreq = 0;
 				return Out;
 			}

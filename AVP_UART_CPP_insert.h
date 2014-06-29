@@ -6,7 +6,7 @@
  */
 
 static SimpleCircBuffer<uint8_t> BufferTX; // 256 byte buffers
-static CircBuffer<uint8_t, 10, uint16_t> BufferRX; //1024 size buffer
+static CircBuffer<uint8_t, 5, uint16_t> BufferRX; 
 static volatile uint8_t StatusRX; // bits meaning in StatusBits
 
 // there is too ways to setup transmission. Either via circular buffer, ot by giving a data
@@ -22,9 +22,9 @@ uint8_t GetStatusRX() { uint8_t t = StatusRX; StatusRX = 0; return t; }
 
 uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
 
-bool ReadInto(uint8_t &d) {
+bool ReadInto(uint8_t *pd) {
   if(BufferRX.LeftToRead()) {
-    d = BufferRX.Read();
+    *pd = BufferRX.Read();
     return true;
   } else return false;
 } // ReadInto

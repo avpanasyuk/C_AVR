@@ -37,9 +37,10 @@ template<class _Timer> struct TimeCounter {
 	static constexpr uint8_t FindPrescalerI(uint8_t CurI=0) {
 		return CurI == N_ELEMENTS(_Timer::Prescalers) || _Timer::Prescalers[CurI] > Log2Divider?CurI-1:FindPrescalerI(CurI+1);
 	}
-	static constexpr uint8_t Log2ClocksInTick = _Timer::Prescalers[FindPrescalerI()] - Log2Divider;
+	static constexpr uint8_t PrescalerI = _Timer::Prescalers[FindPrescalerI()];
+	static constexpr uint8_t Log2ClocksInTick =  PrescalerI - Log2Divider;
 	/*! Ok, so our tick is a microsecond or smaller, so what is it in nanoseconds */
-	static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> _Timer::Prescalers[FindPrescalerI()]);
+	static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> PrescalerI);
 	static constexpr uint16_t Log2TicksInKibitick = avp::RoundLog2Ratio(1000000UL,NanosecondsInTick); // almost always 10
 	static constexpr uint16_t MicrosecondsInKibitick = (uint32_t(NanosecondsInTick) << Log2TicksInKibitick)/1000UL;
 	static constexpr uint16_t ClocksInKibitick = 1U << (Log2ClocksInTick+Log2TicksInKibitick);

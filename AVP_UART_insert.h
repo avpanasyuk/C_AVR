@@ -10,8 +10,8 @@ uint32_t Init(uint32_t baud);
 bool ptr_busy();
 //! returns StatusRX and resets it. We are discarding all input after error occurs until reset
 uint8_t GetStatusRX(); 
-//! returns a pointer to a character, or NULL if none are available
-bool ReadInto(uint8_t &d); 
+//! stores character along pd, returns true if there was a character 
+bool ReadInto(uint8_t *pd); 
 
 // ALL write function return false is overrun and true if OK
 ////// two primary "write" functions

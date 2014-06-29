@@ -62,7 +62,7 @@ struct Timer1: public Timer<uint16_t> {
 }; // Timer1
 
 struct Timer2: public Timer<uint8_t> {
-	static constexpr uint8_t Prescalers[] = {0,3,5,6,7,8,10}; // powers of 2
+	static constexpr uint8_t Prescalers[] = {0}; // powers of 2
 
 	static void InitCTC() {
 		PRR &= ~(1<<PRTIM2); // remove Timer2 bit from the power reduction register
