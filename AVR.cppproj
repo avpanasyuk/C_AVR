@@ -148,6 +148,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ADC.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ADC.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="ATmega1284P_Timers.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -160,16 +166,7 @@
     <Compile Include="ATmega88A_Timers.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="AVP_UART.cpp">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="AVP_UART.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="AVP_UART_CPP_insert.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="AVP_UART_insert.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="DigitalPin.h">
@@ -185,6 +182,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="HardSPI.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HW_UART.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HW_UART.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="service.c">
