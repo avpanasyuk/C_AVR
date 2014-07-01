@@ -14,6 +14,8 @@
 
 namespace avp {
   volatile uint8_t UART0::StatusRX; // bits meaning in StatusBits
+  bool (*UART0::StoreReceivedByte)(uint8_t b);
+  bool (*UART0::GetByteToSend)(volatile uint8_t *b);
 
   uint32_t UART0::Init(uint32_t baud) {
     PRR &= ~(1<<PRUSART0);
@@ -29,13 +31,15 @@ namespace avp {
 
   inline void UART0::RX_vect() {
     StatusRX |= (7<<UPE0) & UCSR0A; // checks whether serial protocol OK
-    if(!pStoreReceivedByte(UDR0)) StatusRX |= 1<<OVERRAN;
+    if(!UART0::StoreReceivedByte(UDR0)) StatusRX |= 1<<OVERRAN;
   } // if buffer is overran it will produce
 
   // we have top free buffer first and then pointer. Until pointer is freed we can not write any more
   inline void UART0::UDRE_vect() {
-    if(!pGetByteToSend(&UDR0)) UCSR0B &= ~(1<<UDRIE0); // nothing to transmit for now, disable interrupt
+    if(!UART0::GetByteToSend(&UDR0)) avp::set_low(UCSR0B,UDRIE0); // nothing to transmit for now, disable interrupt
   }
+  
+  void UART0::EnableTX_Interrupt() { avp::set_high(UCSR0B,UDRIE0); }
 
   ISR(USART_RX_vect) { UART0::RX_vect(); }
   ISR(USART_UDRE_vect) { UART0::UDRE_vect(); }
@@ -45,6 +49,8 @@ namespace avp {
   // bits. So we make RX buffer
 
   volatile uint8_t UART1::StatusRX; // bits meaning in StatusBits
+  bool (*UART1::StoreReceivedByte)(uint8_t b);
+  bool (*UART1::GetByteToSend)(volatile uint8_t *b);
 
   uint32_t UART1::Init(uint32_t baud) {
     PRR0 &= ~(1<<PRUSART1);
@@ -60,13 +66,15 @@ namespace avp {
 
   inline void UART1::RX_vect() {
     StatusRX |= (7<<UPE1) & UCSR1A; // checks whether serial protocol OK
-    if(!pStoreReceivedByte(UDR1)) StatusRX |= 1<<OVERRAN;
+    if(!UART1::StoreReceivedByte(UDR1)) StatusRX |= 1<<OVERRAN;
   } // if buffer is overran it will produce
 
   // we have top free buffer first and then pointer. Until pointer is freed we can not write any more
   inline void UART1::UDRE_vect() {
-    if(!pGetByteToSend(&UDR1)) UCSR1B &= ~(1<<UDRIE1); // nothing to transmit for now, disable interrupt
+    if(!UART1::GetByteToSend(&UDR1)) avp::set_low(UCSR1B,UDRIE1); // nothing to transmit for now, disable interrupt
   }
+    
+  void UART1::EnableTX_Interrupt() { avp::set_high(UCSR1B,UDRIE1); }
 
   ISR(USART1_RX_vect) { UART1::RX_vect(); }
   ISR(USART1_UDRE_vect) { UART1::UDRE_vect(); }
