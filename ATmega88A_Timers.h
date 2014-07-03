@@ -49,7 +49,7 @@ struct Timer1: public Timer<uint16_t> {
 		OCR1A = ClocksInKibitick; // we do interrupt when we count to about a  millisecond
 		TIMSK1 |= (1<<OCIE1A); // enable compare interrupts
 		TCCR1A = 0; // normal WGM, output pins disconnected
-		TCCR1B = (PrescalerI+1)<<CS10;  // PrescalerI is 1-based, because value 0 turns it off 
+		TCCR1B = (PrescalerI+1)<<CS10;  // PrescalerI is 1-based, because value 0 turns clock off 
 		sei();
 	} // Init
 

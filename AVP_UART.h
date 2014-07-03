@@ -27,8 +27,8 @@ namespace avp {
     // when latter is in use write fails
     static volatile const uint8_t *TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
     static volatile size_t TX_Size;
-    static CircBuffer<uint8_t, Log2_TX_Buf_size> BufferTX;
-    static CircBuffer<uint8_t, Log2_RX_Buf_Size> BufferRX;
+    static volatile CircBuffer<uint8_t, Log2_TX_Buf_size> BufferTX;
+    static volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> BufferRX;
 
     static bool ptr_busy() { return  TX_Size != 0; }
 
@@ -45,13 +45,13 @@ namespace avp {
         TX_Size--;
       } else return false;
       return true;
-    }
+    } //  GetByteToSend
 
    public:
     static uint32_t Init(uint32_t baud) {
       HW_UART::SetCallBacks(&StoreReceivedByte,&GetByteToSend);
       return HW_UART::Init(baud);
-    }
+    } //  Init
 
     static uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
 
@@ -64,9 +64,9 @@ namespace avp {
     } // ReadInto
 
     // ALL write function return false is overrun and true if OK
-    //! does not assume that Ptr remains valid afterwards,
-    //! so copies data from Ptr into buffer
-    static bool write(const void *Ptr, size_t Size) { // does not assume that Ptr remains valid afterwards, so stores into buffer only
+    
+    //! does not assume that Ptr remains valid afterwards, so it buffers data
+    static bool write(const void *Ptr, size_t Size) { 
       if(ptr_busy()) return false; // if block is yet to be written we can not write to buffer, as buffer is read first
       if(Size <= BufferTX.LeftToWrite()) {
         const uint8_t *p = (const uint8_t *)Ptr;
@@ -100,11 +100,11 @@ namespace avp {
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
   volatile const uint8_t *UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile size_t UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size;
+  volatile size_t UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size = 0;
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  CircBuffer<uint8_t, Log2_TX_Buf_size> UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
+  volatile CircBuffer<uint8_t, Log2_TX_Buf_size> UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  CircBuffer<uint8_t, Log2_RX_Buf_Size> UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
+  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
 }; // avp
 
 #endif /* HARDUART_H_ */

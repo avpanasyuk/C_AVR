@@ -70,6 +70,7 @@ template<class _Timer> struct TimeCounter {
 	TimeCounter() { Init(); }	// this constructor only to call Init() automatically
 }; // TimeCounter
 
+// ! Timer has to be 16-bit timer!
 #define DEFINE_TIME(TimerI) typedef TimeCounter<_COMB2(Timer,TimerI)> Time; \
 	static inline uint32_t millis() { return Time::kibiticks(); } \
 	static inline uint32_t micros() { return Time::ticks(); }
