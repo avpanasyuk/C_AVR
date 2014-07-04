@@ -181,6 +181,9 @@
     <Compile Include="HardSPI.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="HW_Timer.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="HW_UART.cpp">
       <SubType>compile</SubType>
     </Compile>
