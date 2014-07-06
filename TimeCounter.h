@@ -8,7 +8,7 @@
 * so, use ia like this:
 -------------- in header file ---------------
 #include "ATmega88A_Timers.h"
-#include "Time.h"
+#include "TimeCounter.h"
 
 DEFINE_TIME(1) 
 -------------- in source file ----------------
@@ -16,13 +16,13 @@ INIT_TIME(1)
 */
 
 
-#ifndef TIME_H_
-#define TIME_H_
+#ifndef TIME_COUNTER_H_
+#define TIME_COUNTER_H_
 
 #include <General.h>
 #include "service.h"
 
-template<class _Timer> struct TimeCounter {
+template<class TimerRegs> struct TimeCounter: public Timer16bits<TimerRegs> {
 	/*! Ok, how do we select a prescaler? We need both micro and millisecond scales, so we need 16-bit timer/counter,
 	* because if it counts faster then microseconds it we roll over before millisecond comes. So, the only consideration is that
 	* it counts faster then microsecond.
@@ -30,14 +30,15 @@ template<class _Timer> struct TimeCounter {
 	* not have division and it takes forever. We use only shift instead of divisions. So we can not get micro and millisecond PRECISLEY,
 	* instead we will have "tick" which is as close as possible but smaller then microsecond and "kibitick" = 2^10*"tick.  And
 	* we have "clock" which is what we really running timer at, because prescaler setting are not every power of 2, so "tick" may be = 2^?*"clock"
-	*/
+	*/ 
+  typedef Timer16bits<TimerRegs> R;
 	static constexpr uint8_t Log2Divider = avp::log2(F_CPU/1000000UL);
 
 	/*! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of 2*/
 	static constexpr uint8_t FindPrescalerI(uint8_t CurI=0) {
-		return CurI == N_ELEMENTS(_Timer::Prescalers) || _Timer::Prescalers[CurI] > Log2Divider?CurI-1:FindPrescalerI(CurI+1);
+		return CurI == N_ELEMENTS(R::Prescalers) || R::Prescalers[CurI] > Log2Divider?CurI-1:FindPrescalerI(CurI+1);
 	}
-	static constexpr uint8_t PrescalerI = _Timer::Prescalers[FindPrescalerI()];
+	static constexpr uint8_t PrescalerI = R::Prescalers[FindPrescalerI()];
 	static constexpr uint8_t Log2ClocksInTick =  PrescalerI - Log2Divider;
 	/*! Ok, so our tick is a microsecond or smaller, so what is it in nanoseconds */
 	static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> PrescalerI);
@@ -47,15 +48,23 @@ template<class _Timer> struct TimeCounter {
 	static volatile uint32_t Kibiticks;  // something close to a millisecond, may be up to 40% off
 	
 	static void InterruptHandler() __attribute__((always_inline)) {
-		while(*_Timer::pTCNT() > ClocksInKibitick) {
-			*_Timer::pTCNT() -= ClocksInKibitick;
+		while(*R::pCounter() > ClocksInKibitick) {
+			*R::pCounter() -= ClocksInKibitick;
 			Kibiticks++;
 		}
 	} //  InterruptHandler
 	
-	static void Init() { _Timer::InitTimeCounter(ClocksInKibitick, FindPrescalerI()); }
+	static void Init() { 
+    R::Power(1);
+    R::SetCountToValue(ClocksInKibitick);
+    *R::pTIMSKx |= (1<<R::OCIExA); // enable compare interrupts
+    *R::pTCCRxA = 0;
+    *R::pTCCRxB = (FindPrescalerI()+1)<<R::CSx0;  // PrescalerI is 1-based, because value 0 turns it off
+    sei();
+  } // Init
 
-	static uint32_t _ticks() { return (Kibiticks << Log2TicksInKibitick) + (*_Timer::pTCNT() >> Log2ClocksInTick); }
+	static uint32_t _ticks() { return (Kibiticks << Log2TicksInKibitick) + 
+    (*R::pCounter() >> Log2ClocksInTick); }
 	static uint32_t ticks() { ISR_Blocker Auto; return _ticks(); }
 	static uint32_t kibiticks() { return Kibiticks; }
 	static void delayTicks(uint32_t delay) { // delay < UINT32_MAX/2
@@ -71,7 +80,7 @@ template<class _Timer> struct TimeCounter {
 }; // TimeCounter
 
 // ! Timer has to be 16-bit timer!
-#define DEFINE_TIME(TimerI) typedef TimeCounter<_COMB2(Timer,TimerI)> Time; \
+#define DEFINE_TIME(TimerI) typedef TimeCounter<_COMB(Timer,TimerI,Regs)> Time; \
 	static inline uint32_t millis() { return Time::kibiticks(); } \
 	static inline uint32_t micros() { return Time::ticks(); }
 
@@ -90,4 +99,4 @@ template<uint32_t (*TickFunction)(), typename T=uint32_t> class TimeOut {
 }; // Out
 
 
-#endif /* TIME_H_ */
+#endif /* TIME_COUNTER_H_ */

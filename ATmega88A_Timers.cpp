@@ -8,8 +8,8 @@
 
 #include "ATmega88A_Timers.h"
 
-constexpr uint8_t Timer0::Prescalers[];
-constexpr uint8_t Timer1::Prescalers[];
-constexpr uint8_t Timer2::Prescalers[];
+// constexpr uint8_t Timer0::Prescalers[];
+// constexpr uint8_t Timer1::Prescalers[];
+// constexpr uint8_t Timer2::Prescalers[];
 
 #endif
