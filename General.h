@@ -6,8 +6,8 @@
  */ 
 
 
-#ifndef GENERAL_H_
-#define GENERAL_H_
+#ifndef AVR_GENERAL_H_
+#define AVR_GENERAL_H_
 
 #include <AVP_LIBS/General/General.h>
 
@@ -19,8 +19,8 @@
 //! name PreXPost, where X is index. The Name of pointer will  be PrexPost. For example  REG_PTR_DEF(TCCR,0,A) 
 //! defines pTCCRxA to point to  TCCR0A 
 #define REG_PTR_DEF(Pre,I,Post) \
-static constexpr decltype(&__COMB2(Pre,I,Post)) \
-p##Pre##x##Post = &__COMB2(Pre,I,Post);
+static constexpr decltype(&__COMB(Pre,I,Post)) \
+p##Pre##x##Post = &__COMB(Pre,I,Post);
 
 //! defines constexpr uint8_t number equal to corresponding bit number. For example  REG_PTR_DEF(COM,0,A0)
 //! defines COMxA0 to be equal to COM0A0
@@ -31,4 +31,4 @@ static constexpr uint8_t __COMB(Pre,x,Post) = _COMB(Pre,I,Post);
 
 
 
-#endif /* GENERAL_H_ */
+#endif /* AVR_GENERAL_H_ */

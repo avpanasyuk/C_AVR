@@ -16,8 +16,8 @@
 // WGM - Waveform Generation Mode
 // COM - Compare Output Mode
 #define TIMER_REGS_DEF(I,nbits,PRRi,...) \
-  struct _COMB(Timer,I,Regs) { \
-    typedef _COMB(uint,nbits,_t) CounterType ; \
+  struct __COMB(Timer,I,Regs) { \
+    typedef __COMB(uint,nbits,_t) CounterType ; \
     static constexpr uint8_t Width = nbits; \
     REG_PTR_DEF(TCCR,I,A) \
     REG_PTR_DEF(TCCR,I,B) \

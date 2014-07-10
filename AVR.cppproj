@@ -110,7 +110,7 @@
   </avrgcc.compiler.symbols.DefSymbols>
   <avrgcc.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>../../General</Value>
+      <Value>../../..</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -193,13 +193,10 @@
     <Compile Include="PWM.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="service.c">
+    <Compile Include="service.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="service.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="service_cpp.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="SoftSPI.h">
