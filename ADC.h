@@ -10,7 +10,7 @@
 #define ADC_H_
 
 #include <avr/io.h>
-#include <service.h>
+#include "service.h"
 
 //! NOTE: ADC clock frequency is between 50 and 200 kHz, normal conversion takes 13 cycles
 namespace avp_ADC {

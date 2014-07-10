@@ -1,17 +1,18 @@
-/*
-* SoftUART.h
+/*!
+* @file SoftUART.h
 *
 * Created: 7/29/2013 2:37:48 PM
 *  Author: panasyuk
+*  @note To use this class first we have to define HW_UART class using UART_CLASS_DECL(I,PRRi,VectI) macro
 */
 
 
-#ifndef HARDUART_H_
-#define HARDUART_H_
+#ifndef AVP_UART_H_
+#define AVP_UART_H_
 
 #include <stdint.h>
 #include <string.h>
-#include <CircBuffer.h>
+#include <AVP_LIBS/General/CircBuffer.h>
 #include "HW_UART.h"
 
 // the AVP_UART has two ways to transfer - buffered and unbuffered. We try to fill the buffer first. If message does not fit into buffer
@@ -19,8 +20,8 @@
 // then pointer.
 
 namespace avp {
-  template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  class UART {
+  template<class HW_UART, uint8_t Log2_TX_Buf_size=5, uint8_t Log2_RX_Buf_Size=5>
+  class Serial {
     // there is too ways to setup transmission. Either via circular buffer, or by giving a data
     // pointer and size to transmit
     // NOTE: we use circular buffer as much as we can, when we run out of space we use the block one,
@@ -49,9 +50,10 @@ namespace avp {
 
    public:
     static uint32_t Init(uint32_t baud) {
-      HW_UART::SetCallBacks(&StoreReceivedByte,&GetByteToSend);
-      return HW_UART::Init(baud);
+      return HW_UART::Init(baud,&StoreReceivedByte,&GetByteToSend);
     } //  Init
+    
+    Serial(uint32_t baud) { Init(baud); }
 
     static uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
 
@@ -98,14 +100,14 @@ namespace avp {
     static bool write(int8_t d) { return write((uint8_t)d); }
   }; // UART
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile const uint8_t *UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
+  volatile const uint8_t *Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile size_t UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size = 0;
+  volatile size_t Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size = 0;
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile CircBuffer<uint8_t, Log2_TX_Buf_size> UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
+  volatile CircBuffer<uint8_t, Log2_TX_Buf_size> Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
   template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> UART<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
+  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
 }; // avp
 
-#endif /* HARDUART_H_ */
+#endif /* AVP_UART_H_ */
 

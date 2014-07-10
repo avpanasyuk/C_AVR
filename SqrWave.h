@@ -8,7 +8,7 @@
 #ifndef SQRWAVE_h
 #define SQRWAVE_h
 
-#include <General.h>
+#include <AVP_LIBS/General/General.h>
 
 // @note We can not set timer to toggle pin OCRB, only OCRA
 // @note When prescaler is set to index 0 output is disabled, first active index is one

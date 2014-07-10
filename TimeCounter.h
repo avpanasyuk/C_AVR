@@ -19,7 +19,7 @@ INIT_TIME(1)
 #ifndef TIME_COUNTER_H_
 #define TIME_COUNTER_H_
 
-#include <General.h>
+#include <AVP_LIBS/General/General.h>
 #include "service.h"
 
 template<class TimerRegs> struct TimeCounter: public Timer16bits<TimerRegs> {

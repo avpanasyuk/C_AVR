@@ -10,7 +10,7 @@
 #define GIOPINS_H_
 
 #include <avr/io.h>
-#include <General.h>
+#include <AVP_LIBS/General/General.h>
 
 namespace avp {
   template<uint16_t DDRaddr, uint16_t PORTaddr, uint16_t PINaddr, uint8_t Number> struct Pin {
