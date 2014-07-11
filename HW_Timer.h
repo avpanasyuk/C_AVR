@@ -15,7 +15,7 @@
 
 // WGM - Waveform Generation Mode
 // COM - Compare Output Mode
-#define TIMER_REGS_DEF(I,nbits,PRRi,...) \
+#define TIMER_REGS_DEFS(I,nbits,PRRi,...) \
   struct __COMB(Timer,I,Regs) { \
     typedef __COMB(uint,nbits,_t) CounterType ; \
     static constexpr uint8_t Width = nbits; \
@@ -40,7 +40,9 @@ template<class TimerRegs> struct HW_Timer: public TimerRegs {
   static void Power(bool State) { avp::setbit(*TimerRegs::pPRRx,TimerRegs::PRTIMx,!State); }
   static void SetCountToValue(CounterType Value) { *TimerRegs::pOCRxA = Value; }
   //! @param PrescalerI is just a value from CSxx table, 0 stops clock
-  static void SetPrescaler(uint8_t PrescalerI) { avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI); }
+  static void SetPrescaler(uint8_t PrescalerI) { 
+    avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI); 
+  }
 }; // Timer
 
 template<class TimerRegs> struct Timer8bits:public HW_Timer<TimerRegs> {
