@@ -40,7 +40,7 @@ namespace avp {
     } // StoreReceivedByte
 
     static bool GetByteToSend(volatile uint8_t *b) {
-      if(BufferRX.LeftToRead()) *b = BufferTX.Read();
+      if(BufferTX.LeftToRead()) *b = BufferTX.Read();
       else if(TX_Size) { // circular buffer is empty and now block pointer
         *b = *(TX_Ptr++);
         TX_Size--;
