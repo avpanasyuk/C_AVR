@@ -13,6 +13,9 @@
 #include <AVP_LIBS/General/General.h>
 
 namespace avp {
+  enum PinModes {INPUT, OUTPUT};
+  enum PinLevels {LOW, HIGH};
+
   template<uint16_t DDRaddr, uint16_t PORTaddr, uint16_t PINaddr, uint8_t Number> struct Pin {
     /*! sets PULLUP when mode is INPUT */
     static void write(bool value) { setbit(*(uint8_t *)PORTaddr,Number,value );  }

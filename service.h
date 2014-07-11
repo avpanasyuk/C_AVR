@@ -36,21 +36,5 @@ public:
 }; // ISR_Blocker
 
 static inline void hang_cpu() { cli(); volatile uint8_t stop=1; while(stop); }
-  
-namespace avp {
-  // ***** REGISTERS BIT HANDLING FUNCTIONS
-  inline void set_high(volatile uint8_t &reg, uint8_t bitI) { reg |= 1 << bitI; }
-  inline void set_low(volatile uint8_t &reg, uint8_t bitI) { reg &= ~(1 << bitI); }
-  inline void setbit(volatile uint8_t &reg, uint8_t bitI, bool value) {
-    value?set_high(reg,bitI):set_low(reg,bitI);
-  } // setbit
-  inline bool getbit(volatile uint8_t &reg,uint8_t bitI) {
-    return (reg >> bitI) & 1;
-  }
-  inline void setbits(volatile uint8_t &reg, uint8_t lowest_bit, uint8_t numbits, uint8_t value) {
-    uint8_t Mask = ((1 << numbits) - 1) << lowest_bit;
-    reg = (reg | Mask) & (value << lowest_bit);
-  }
-} // avp  
 
 #endif /* SERVICE_H_ */

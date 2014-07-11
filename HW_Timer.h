@@ -28,7 +28,9 @@
     REG_PTR_DEF(TIMSK,I,) \
     BIT_NUM_DEF(PRTIM,I,) \
     BIT_NUM_DEF(COM,I,A0) \
+    BIT_NUM_DEF(WGM,I,2) \
     BIT_NUM_DEF(WGM,I,1) \
+    BIT_NUM_DEF(WGM,I,0) \
     BIT_NUM_DEF(CS,I,0) \
     BIT_NUM_DEF(OCIE,I,A) \
     static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
@@ -53,6 +55,8 @@ template<class TimerRegs> struct Timer8bits:public HW_Timer<TimerRegs> {
     avp::set_low(*R::pTCCRxB,R::WGMx2);
   }
   static void InitPWM() {
+    // Fast PWM mode, Clear OC0A on Compare Match, set OC0A at BOTTOM
+    // Do not forget to set Prescaler
     *R::pTCCRxA = (2 << R::COMxA0)|(3 << R::WGMx0);
     avp::set_low(*R::pTCCRxB,R::WGMx2);
   }
