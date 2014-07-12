@@ -1,7 +1,6 @@
 #ifndef SoftSPI_h
 #define SoftSPI_h
 
-#include <DigitalPin.h>
 //------------------------------------------------------------------------------
 /** nop for timing */
 #define NOP asm volatile ("nop\n\t")
