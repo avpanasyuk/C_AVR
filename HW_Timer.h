@@ -13,29 +13,7 @@
 #include <AVP_LIBS/General/General.h>
 #include "General.h"
 
-// WGM - Waveform Generation Mode
-// COM - Compare Output Mode
-#define TIMER_REGS_DEFS(I,nbits,PRRi,...) \
-  struct __COMB(Timer,I,Regs) { \
-    typedef __COMB(uint,nbits,_t) CounterType ; \
-    static constexpr uint8_t Width = nbits; \
-    REG_PTR_DEF(TCCR,I,A) \
-    REG_PTR_DEF(TCCR,I,B) \
-    REG_PTR_DEF(OCR,I,A) \
-    REG_PTR_DEF(OCR,I,B) \
-    REG_PTR_DEF(PRR,PRRi,) \
-    REG_PTR_DEF(TCNT,I,) \
-    REG_PTR_DEF(TIMSK,I,) \
-    BIT_NUM_DEF(PRTIM,I,) \
-    BIT_NUM_DEF(COM,I,A0) \
-    BIT_NUM_DEF(WGM,I,2) \
-    BIT_NUM_DEF(WGM,I,1) \
-    BIT_NUM_DEF(WGM,I,0) \
-    BIT_NUM_DEF(CS,I,0) \
-    BIT_NUM_DEF(OCIE,I,A) \
-    static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
-  }; //TimerXRegs
-
+//! @brief class for functions which work identical for 8 bit and 16 bit timers
 template<class TimerRegs> struct HW_Timer: public TimerRegs {
   typedef typename TimerRegs::CounterType CounterType;
   static constexpr volatile CounterType *pCounter() { return TimerRegs::pTCNTx; }
@@ -75,5 +53,30 @@ template<class TimerRegs> struct Timer16bits:public HW_Timer<TimerRegs> {
     avp::setbits(*R::pTCCRxB,R::WGMx2,2,1);
   }
 }; // Timer16bits
+
+//! this timer definition should be used in processor specific header files only, where they define all timers for this processor
+#define TIMER_DEFS(I,nbits,PRRi,...) \
+struct __COMB(Timer,I,Regs) { \
+  typedef __COMB(uint,nbits,_t) CounterType ; \
+  static constexpr uint8_t Width = nbits; \
+  REG_PTR_DEF(TCCR,I,A) \
+  REG_PTR_DEF(TCCR,I,B) \
+  REG_PTR_DEF(OCR,I,A) \
+  REG_PTR_DEF(OCR,I,B) \
+  REG_PTR_DEF(PRR,PRRi,) \
+  REG_PTR_DEF(TCNT,I,) \
+  REG_PTR_DEF(TIMSK,I,) \
+  BIT_NUM_DEF(PRTIM,I,) \
+  BIT_NUM_DEF(COM,I,A0) \
+  BIT_NUM_DEF(WGM,I,2) \
+  BIT_NUM_DEF(WGM,I,1) \
+  BIT_NUM_DEF(WGM,I,0) \
+  BIT_NUM_DEF(CS,I,0) \
+  BIT_NUM_DEF(OCIE,I,A) \
+  static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
+}; \
+typedef __COMB(Timer,nbits,bits)<__COMB(Timer,I,Regs)> __COMB2(Timer,I);
+
+//TimerXRegs
 
 #endif /* HW_TIMER_H_ */

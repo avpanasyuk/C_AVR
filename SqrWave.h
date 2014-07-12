@@ -9,21 +9,22 @@
 #define SQRWAVE_h
 
 #include <AVP_LIBS/General/General.h>
+#include <AVP_LIBS/AVR/HW_Timer.h>
 
 // @note We can not set timer to toggle pin OCRB, only OCRA
 // @note When prescaler is set to index 0 output is disabled, first active index is one
-template<class TimerRegs> struct SqrWave: public HW_Timer<TimerRegs> {
-  typedef HW_Timer<TimerRegs> R; 
+template<class Timer> struct SqrWave: public Timer {
+  typedef typename Timer::CounterType CounterType;
   typedef struct {
     CounterType CountTo; // divider = CountTo + 1
     uint8_t PrescalerInd; //! prescaler index, first active is 1
   } Params;
  public:
-  static void Init() {     R::Power(1); R::InitCTC(); }
+  static void Init() {     Timer::Power(1); Timer::InitCTC(); }
   SqrWave() { Init(); } // just to call init when initiating static object
 
-  static uint32_t GetFreq(typename Params Codes) {
-    return avp::RoundRatio<uint32_t>(F_CPU >> (R::Prescalers[Codes.PrescalerInd-1]+1),
+  static uint32_t GetFreq(Params Codes) {
+    return avp::RoundRatio<uint32_t>(F_CPU >> (Timer::Prescalers[Codes.PrescalerInd-1]+1),
                                      Codes.CountTo+1);
   } // GetFreq
 
@@ -33,21 +34,21 @@ template<class TimerRegs> struct SqrWave: public HW_Timer<TimerRegs> {
    * @param[in/out] pPrescalerInd - pointer to place to return Prescaler index
    * @retval - CountTo Value;
    */
-  static typename Params GetCodes(uint32_t *pFreq) {
-    typename Params Out = {0,0};
+  static Params GetCodes(uint32_t *pFreq) {
+    Params Out = {0,0};
     uint32_t Divider = avp::RoundRatio<uint32_t>(F_CPU>>1, *pFreq);
-    uint16_t MinPrescaler = Divider >> Width; // prescaler should be large enough so
+    uint16_t MinPrescaler = Divider >> Timer::Width; // prescaler should be large enough so
     // the rest of the divider fits into Counter
-    while(MinPrescaler >> R::Prescalers[Out.PrescalerInd++]) {
+    while(MinPrescaler >> Timer::Prescalers[Out.PrescalerInd++]) {
       #ifdef DEBUG
-      if(Out.PrescalerInd >= N_ELEMENTS(R::Prescalers)) {
+      if(Out.PrescalerInd >= N_ELEMENTS(Timer::Prescalers)) {
         *pFreq = 0;
         return Out;
       }
       #endif
     }
     // we added additional 1 to PrescalerInd but it is fine because the index is 1-based
-    Out.CountTo = (Divider >> R::Prescalers[Out.PrescalerInd-1]) - 1;
+    Out.CountTo = (Divider >> Timer::Prescalers[Out.PrescalerInd-1]) - 1;
     *pFreq = GetFreq(Out);
     return Out;
   }	// GetCodes
@@ -56,13 +57,13 @@ template<class TimerRegs> struct SqrWave: public HW_Timer<TimerRegs> {
    *  @param Codes, struct, PrescalerInd is 1-based index of prescalers,
    *  CountTo - specifies divider as CountTo + 1
    */
-  static void SetFreqByCodes(typename Params Codes) {
-    R::SetPrescaler(Codes.PrescalerInd);
-    R::SetCountToValue(Codes.CountTo);
+  static void SetFreqByCodes(Params Codes) {
+    Timer::SetPrescaler(Codes.PrescalerInd);
+    Timer::SetCountToValue(Codes.CountTo);
   }	// SetFreqByCodes
 
   static uint32_t SetFreq(uint32_t Freq) {
-    typename Params Codes = GetCodes(&Freq);
+    Params Codes = GetCodes(&Freq);
     SetFreqByCodes(Codes);
     return Freq;
   }	// SetFreq

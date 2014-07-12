@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 #include "service.h"
-#include "DigitalPin.h"
+#include "GIOpins.h"
 
 class SPI_Wrapper { static uint8_t Nested; };
 	
@@ -20,19 +20,21 @@ class SPI_Wrapper { static uint8_t Nested; };
 	#define PRR0 PRR
 #endif	
 
-template<uint8_t nSS, uint8_t CLK, uint8_t MOSI, uint8_t MISO> class tSPI {
+using namespace avp;
+
+template<class nSS, class CLK, class MOSI, class MISO> class tSPI {
 public:
   static void SetMode(uint8_t Mode) { SPCR &= ~(3<<CPHA); SPCR |= Mode<<CPHA; }
   static void SetFDIV(uint8_t FDIV) { SPCR &= ~3; SPCR |= FDIV; }
   static void BitOrder(bool MSBfirst) { SPCR &= ~(1<<DORD); SPCR |= MSBfirst?0:(1<<DORD); }
   static void Init(uint8_t Mode = 0, uint8_t FDIV = 0, bool MSBfirst = true) {
     PRR0 &= ~(1<<PRSPI); // remove SPI bit from the power reduction register
-    DigitalPin<nSS>::mode(OUTPUT); // and should be kept OUTPUT, otherwise switches to SLAVE  mode
+    nSS::mode(OUTPUT); // and should be kept OUTPUT, otherwise switches to SLAVE  mode
     SPCR = (1<<MSTR)|(1<<SPE); // enable hardware SPI and set as MASTER, interrupts disabled
     SPSR &= ~(1<<SPI2X); // no 2x clock
-    DigitalPin<CLK>::mode(OUTPUT);
-    DigitalPin<MOSI>::mode(OUTPUT);
-    DigitalPin<MISO>::mode(INPUT);
+    CLK::mode(OUTPUT);
+    MOSI::mode(OUTPUT);
+    MISO::mode(INPUT);
     SetMode(Mode);
     SetFDIV(FDIV);
     BitOrder(MSBfirst);
@@ -54,19 +56,19 @@ public:
    * @tparam SPI_MODE SPI mode to activate
    */ 
 
-  template<uint8_t nCS_pin, uint8_t SPI_MODE> struct tWrapper: public SPI_Wrapper {
+  template<class nCS_pin, uint8_t SPI_MODE> struct tWrapper: public SPI_Wrapper {
 //     static struct Initer_ {
-//       Initer_(int) { DigitalPin<nCS_pin>::config(OUTPUT,HIGH); }
+//       Initer_(int) { nCS_pin::config(OUTPUT,HIGH); }
 //     } Initer;
     tWrapper() {
       if(!Nested++) {
         SetMode(SPI_MODE);
         NOP;  NOP;  NOP; // FIXME do we need it?
-        DigitalPin<nCS_pin>::low();
+        nCS_pin::set_low();
       }        
     } // constructor
-    ~tWrapper() { if(!--Nested) DigitalPin<nCS_pin>::high(); }
-    static void Init() { DigitalPin<nCS_pin>::config(OUTPUT,HIGH); }
+    ~tWrapper() { if(!--Nested) nCS_pin::set_high(); }
+    static void Init() { nCS_pin::config(OUTPUT,HIGH); }
   };
 };
 #endif /* HARDSPI_H_ */

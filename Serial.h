@@ -20,7 +20,7 @@
 // then pointer.
 
 namespace avp {
-  template<class HW_UART, uint8_t Log2_TX_Buf_size=5, uint8_t Log2_RX_Buf_Size=5>
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size=5, uint8_t Log2_RX_Buf_Size=5>
   class Serial {
     // there is too ways to setup transmission. Either via circular buffer, or by giving a data
     // pointer and size to transmit
@@ -30,8 +30,6 @@ namespace avp {
     static volatile size_t TX_Size;
     static volatile CircBuffer<uint8_t, Log2_TX_Buf_size> BufferTX;
     static volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> BufferRX;
-
-    static bool ptr_busy() { return  TX_Size != 0; }
 
     static bool StoreReceivedByte(uint8_t b) {
       if(!BufferRX.LeftToWrite()) return false;
@@ -50,12 +48,13 @@ namespace avp {
 
    public:
     static uint32_t Init(uint32_t baud) {
-      return HW_UART::Init(baud,&StoreReceivedByte,&GetByteToSend);
+      return HW_UART_::Init(baud,StoreReceivedByte,GetByteToSend);
     } //  Init
     
     Serial(uint32_t baud) { Init(baud); }
 
     static uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
+    static bool ptr_busy() { return  TX_Size != 0; }
 
     //! stores character along pd, returns true if there was a character
     static bool ReadInto(uint8_t *pd) {
@@ -73,7 +72,7 @@ namespace avp {
       if(Size <= BufferTX.LeftToWrite()) {
         const uint8_t *p = (const uint8_t *)Ptr;
         while(Size--) BufferTX.Write(*(p++));
-        HW_UART::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
+        HW_UART_::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
         return true;
       } else return false;
     }  // write
@@ -82,7 +81,7 @@ namespace avp {
     static bool write_ptr(const void *Ptr, size_t Size) { // stores ptr. Pointed data should not be destroyed until sent
       if(ptr_busy()) return false;
       TX_Ptr = (const uint8_t *)Ptr; TX_Size = Size;
-      HW_UART::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
+      HW_UART_::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
       return true;
     } // write
 
@@ -90,7 +89,7 @@ namespace avp {
       if(ptr_busy()) return false;
       if(!BufferTX.LeftToWrite()) return false;
       BufferTX.Write(d);
-      HW_UART::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
+      HW_UART_::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
       return true;
     } // write
 
@@ -99,15 +98,16 @@ namespace avp {
     template<typename T> static bool write(T d) { return write(&d,sizeof(T)); }
     static bool write(int8_t d) { return write((uint8_t)d); }
   }; // UART
-  template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile const uint8_t *Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
-  template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile size_t Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size = 0;
-  template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile CircBuffer<uint8_t, Log2_TX_Buf_size> Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
-  template<class HW_UART, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> Serial<HW_UART,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
+  volatile const uint8_t *Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
+  volatile size_t Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size = 0;
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
+  volatile CircBuffer<uint8_t, Log2_TX_Buf_size> Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
+  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
 }; // avp
+
 
 #endif /* AVP_UART_H_ */
 

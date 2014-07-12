@@ -15,34 +15,24 @@
 #include <avr/interrupt.h>
 #include "General.h"
 
+//! redefines register names and bit numbers in uniform fashion. Defines structure UARTxRegs with register
+//! addresses and bit numbers
+
+
 namespace avp {
-  struct UART_callback {
+  template<class UART_Regs>  class HW_UART: public UART_Regs {
+    typedef UART_Regs R; // just to make it shorter
     typedef bool (*t_StoreFunc)(uint8_t b);
     typedef bool (*t_GetFunc)(volatile uint8_t *b);
-  };
 
-  //! we are not using template parameter here, but we need to make this static class members individual for each UART
-  template<class UART_Regs> struct HW_UART_Base: public UART_callback {
     static volatile uint8_t StatusRX;
     static t_StoreFunc StoreReceivedByte;
     static t_GetFunc GetByteToSend;
-  };
-
-  template<class UART_Regs> volatile uint8_t HW_UART_Base<UART_Regs>::StatusRX;
-  template<class UART_Regs> UART_callback::t_StoreFunc HW_UART_Base<UART_Regs>::StoreReceivedByte;
-  template<class UART_Regs> UART_callback::t_GetFunc HW_UART_Base<UART_Regs>::GetByteToSend;
-
-  //! HW_UART? class definition generation macro
-  template<class UART_Regs>  class HW_UART: public HW_UART_Base<UART_Regs> {
-    typedef UART_Regs R; // just to make it shorter
-
     enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
    public:
-    static uint32_t Init(uint32_t baud,
-                         UART_callback::t_StoreFunc pS, UART_callback::t_GetFunc pG) {
-      HW_UART_Base<UART_Regs>::StoreReceivedByte = pS;
-      HW_UART_Base<UART_Regs>::GetByteToSend = pG;
-      *R::pPRRx &= ~(1<<R::PRUSARTx);
+    static uint32_t Init(uint32_t baud, t_StoreFunc pS, t_GetFunc pG) {
+      StoreReceivedByte = pS;
+      GetByteToSend = pG;      *R::pPRRx &= ~(1<<R::PRUSARTx);
       *R::pUBRRx = avp::RoundRatio(F_CPU,baud<<4)-1;
       *R::pUCSRxA &= ~(1<<R::U2Xx); // not using special 2x mode
       // enable transmitter and receiver and receiver interrupts
@@ -52,10 +42,10 @@ namespace avp {
       return avp::RoundRatio(F_CPU,uint32_t(*R::pUBRRx+1)<<4);
     }
 
-    static void RX_vect() __attribute__((always_inline)) { // checks whether serial protocol OK
-      HW_UART_Base<UART_Regs>::StatusRX |= (7<<R::UPEx) & *R::pUCSRxA;
-      if(!HW_UART_Base<UART_Regs>::StoreReceivedByte(*R::pUDRx))
-        HW_UART_Base<UART_Regs>::StatusRX |= 1<<OVERRAN;
+    static void RX_vect()
+    __attribute__((always_inline)) { // checks whether serial protocol OK
+      StatusRX |= (7<<R::UPEx) & *R::pUCSRxA;
+      if(!StoreReceivedByte(*R::pUDRx)) StatusRX |= 1<<OVERRAN;
       // we got to read UDR, otherwise the interrupt
       // will be called indefinitely. We do not have flow control, so we can not just disable interrupt
       // - we will still be just loosing data
@@ -63,17 +53,19 @@ namespace avp {
 
     // we have top free buffer first and then pointer. Until pointer is freed we can not write any more
     static void UDRE_vect() __attribute__((always_inline)) {
-      if(!HW_UART_Base<UART_Regs>::GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx);
+      if(!GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx);
     }
 
     static void EnableTX_Interrupt() { avp::set_high(*R::pUCSRxB,R::UDRIEx); }
   }; //  HW_UARTx
-}; // namespace avp
-#endif
 
-//! redefines register names and bit numbers in uniform fashion. Defines structure UARTxRegs with register
-//! addresses and bit numbers
-#define UART_DEFS(I,PRRi,USARTi) \
+  template<class UART_Regs> volatile uint8_t HW_UART<UART_Regs>::StatusRX;
+  template<class UART_Regs> typename HW_UART<UART_Regs>::t_StoreFunc HW_UART<UART_Regs>::StoreReceivedByte; 
+  template<class UART_Regs> typename HW_UART<UART_Regs>::t_GetFunc HW_UART<UART_Regs>::GetByteToSend; 
+}; // namespace avp
+
+//! this UART definition should be used in processor specific header files only, where they define all timers for this processor
+#define UART_DEF(I,PRRi,USARTi) \
   struct __COMB(UART,I,Regs) { \
     REG_PTR_DEF(PRR,PRRi,) \
     BIT_NUM_DEF(PRUSART,I,) \
@@ -89,7 +81,13 @@ namespace avp {
     BIT_NUM_DEF(UCSZ,I,0) \
     REG_PTR_DEF(UDR,I,) \
     BIT_NUM_DEF(UDRIE,I,) \
-  };  \
-  typedef class HW_UART<__COMB(UART,I,Regs)> __COMB2(UART,I); \
+  }; /* struct UARTxRegs */\
+  typedef class avp::HW_UART<__COMB(UART,I,Regs)> __COMB2(UART,I);
+  
+  // ! this interrupt handler initialization is used only once in processor definition CPP file
+  #define UART_INIT(I,USARTi) \
   ISR(__COMB(USART,USARTi,_RX_vect)) { __COMB2(UART,I)::RX_vect(); } \
   ISR(__COMB(USART,USARTi,_UDRE_vect)) { __COMB2(UART,I)::UDRE_vect(); }
+
+#endif
+
