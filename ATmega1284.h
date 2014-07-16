@@ -3,6 +3,7 @@
 *
 * Created: 6/14/2014 8:24:01 PM
 *  Author: panasyuk
+* Defines TimerX static class for all timers present in the processor.
 */
 
 
