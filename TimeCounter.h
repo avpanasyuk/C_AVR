@@ -30,20 +30,22 @@ namespace avp {
     * it counts faster then microsecond.
     * One consideration about this class is that it has to be fast, so we can not do divisions because AVR processor does
     * not have division and it takes forever. We use only shift instead of divisions. So we can not get micro and millisecond PRECISLEY,
-    * instead we will have "tick" which is as close as possible but smaller then microsecond and "kibitick" = 2^10*"tick.  And
+    * instead we will have "tick" which is as close as possible but smaller then microsecond and "kibitick" = 2^10*"tick".  And
     * we have "clock" which is what we really running timer at, because prescaler setting are not every power of 2, so "tick" may be = 2^?*"clock"
     */
     typedef Timer16bits<TimerRegs> R;
     static constexpr uint8_t Log2Divider = avp::log2(F_CPU/1000000UL);
 
-    /*! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of 2*/
+    //! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of 
+    //! @retval Prescaler index from Prescalers vector 
     static constexpr uint8_t FindPrescalerI(uint8_t CurI=0) {
-      return CurI == N_ELEMENTS(R::Prescalers) || R::Prescalers[CurI] > Log2Divider?CurI-1:FindPrescalerI(CurI+1);
+      return CurI == N_ELEMENTS(R::Prescalers) || R::Prescalers[CurI] > Log2Divider?
+        CurI-1:FindPrescalerI(CurI+1);
     }
-    static constexpr uint8_t PrescalerI = R::Prescalers[FindPrescalerI()];
-    static constexpr uint8_t Log2ClocksInTick =  PrescalerI - Log2Divider;
+    static constexpr uint8_t Log2Prescaler = R::Prescalers[FindPrescalerI()];
+    static constexpr uint8_t Log2ClocksInTick =  Log2Divider - Log2Prescaler;
     /*! Ok, so our tick is a microsecond or smaller, so what is it in nanoseconds */
-    static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> PrescalerI);
+    static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> Log2Prescaler);
     static constexpr uint16_t Log2TicksInKibitick = avp::RoundLog2Ratio(1000000UL,NanosecondsInTick); // almost always 10
     static constexpr uint16_t MicrosecondsInKibitick = (uint32_t(NanosecondsInTick) << Log2TicksInKibitick)/1000UL;
     static constexpr uint16_t ClocksInKibitick = 1U << (Log2ClocksInTick+Log2TicksInKibitick);
@@ -57,11 +59,15 @@ namespace avp {
     } //  InterruptHandler
 
     static void Init() {
+      volatile uint16_t Idle[] = {Log2Divider,Log2Prescaler,Log2ClocksInTick,NanosecondsInTick,Log2TicksInKibitick,
+      MicrosecondsInKibitick, ClocksInKibitick};
+      
       R::Power(1);
       R::SetCountToValue(ClocksInKibitick);
-      *R::pTIMSKx |= (1<<R::OCIExA); // enable compare interrupts
-      *R::pTCCRxA = 0;
-      *R::pTCCRxB = (FindPrescalerI()+1)<<R::CSx0;  // PrescalerI is 1-based, because value 0 turns it off
+      R::EnableCompareInterrupts();
+      R::SetCompareOutputMode(0);
+      R::SetWaveformGenerationMode(0);
+      R::SetPrescaler(FindPrescalerI()+1);
       sei();
     } // Init
 

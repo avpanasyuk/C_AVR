@@ -19,38 +19,54 @@ template<class TimerRegs> struct HW_Timer: public TimerRegs {
   static constexpr volatile CounterType *pCounter() { return TimerRegs::pTCNTx; }
   static void Power(bool State) { avp::setbit(*TimerRegs::pPRRx,TimerRegs::PRTIMx,!State); }
   static void SetCountToValue(CounterType Value) { *TimerRegs::pOCRxA = Value; }
-  //! @param PrescalerI is just a value from CSxx table, 0 stops clock
+  static void EnableCompareInterrupts() { avp::set_high(*TimerRegs::pTIMSKx, TimerRegs::OCIExA); }
+  //! @param value is 2 bits - COMxA1, COMxA0
+  static void SetCompareOutputMode(uint8_t Value) { 
+    avp::setbits(*TimerRegs::pTCCRxA, TimerRegs::COMxA0, 2, Value); 
+  }
+  //! @param PrescalerI is just a value from CSxx table, 0 stops clock. The prescaler set is equal to Prescalers[PrescalerI-1]
   static void SetPrescaler(uint8_t PrescalerI) { 
     avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI); 
+  }
+  //! @retval index, or -1 if Value is not among prescalers
+  static constexpr int8_t GetPrescalerIndex(uint16_t Value, int8_t CurIndex = 0) {
+    return (1U << TimerRegs::Prescalers[CurIndex]) == Value?CurIndex:
+      (CurIndex == (N_ELEMENTS(TimerRegs::Prescalers)-1))?-1:GetPrescalerIndex(Value,CurIndex+1);
   }
 }; // Timer
 
 template<class TimerRegs> struct Timer8bits:public HW_Timer<TimerRegs> {
   typedef HW_Timer<TimerRegs> R;
   static void InitCTC() {
-    avp::setbits(*R::pTCCRxA,R::COMxA0,2,1); // Toggle OCxA on Compare Match.
-    avp::setbits(*R::pTCCRxA,R::WGMx0,2,2);  // CTC mode
-    avp::set_low(*R::pTCCRxB,R::WGMx2);
+    R::SetCompareOutputMode(1); // Toggle OCxA on Compare Match.
+    SetWaveformGenerationMode(2);
   }
   static void InitPWM() {
     // Fast PWM mode, Clear OC0A on Compare Match, set OC0A at BOTTOM
     // Do not forget to set Prescaler
-    *R::pTCCRxA = (2 << R::COMxA0)|(3 << R::WGMx0);
-    avp::set_low(*R::pTCCRxB,R::WGMx2);
+    R::SetCompareOutputMode(2); // Toggle OCxA on Compare Match.
+    SetWaveformGenerationMode(3);
+  }
+  static void SetWaveformGenerationMode(uint8_t Value) {
+    avp::setbits(*R::pTCCRxA, R::WGMx0, 2, Value & 0x3);
+    avp::setbit(*R::pTCCRxB, R::WGMx2, Value >> 2);
   }
 }; // Timer8bits
 
 template<class TimerRegs> struct Timer16bits:public HW_Timer<TimerRegs> {
   typedef HW_Timer<TimerRegs> R;
   static void InitCTC() {
-    avp::setbits(*R::pTCCRxA,R::COMxA0,2,1); // Toggle OCxA on Compare Match.
-    avp::setbits(*R::pTCCRxA,R::WGMx0,2,0);  // CTC mode
-    avp::setbits(*R::pTCCRxB,R::WGMx2,2,1);
+    R::SetCompareOutputMode(1); // Toggle OCxA on Compare Match.
+    SetWaveformGenerationMode(4); // CTC mode
   }
   //! @param NumBitIndex: 0- 8 bits (counts to 0xFF), 1 - 9 bits (counts to 0x1FF), 2 - 10 bits (counts to 0x3FF)
   static void InitPWM(uint8_t NumBitIndex = 0) {
-    *R::pTCCRxA = (2 << R::COMxA0)|((NumBitIndex+1) << R::WGMx0);
-    avp::setbits(*R::pTCCRxB,R::WGMx2,2,1);
+    R::SetCompareOutputMode(2); // Toggle OCxA on Compare Match.
+    SetWaveformGenerationMode(4|(NumBitIndex+1)); // CTC mode
+  }
+  static void SetWaveformGenerationMode(uint8_t Value) {
+    avp::setbits(*R::pTCCRxA, R::WGMx0, 2, Value & 0x3);
+    avp::setbits(*R::pTCCRxB, R::WGMx2, 2, Value >> 2);
   }
 }; // Timer16bits
 
