@@ -59,9 +59,8 @@ namespace avp {
     } //  InterruptHandler
 
     static void Init() {
-      volatile uint16_t Idle[] = {Log2Divider,Log2Prescaler,Log2ClocksInTick,NanosecondsInTick,Log2TicksInKibitick,
-      MicrosecondsInKibitick, ClocksInKibitick};
-      
+//      volatile uint16_t Idle[] = {Log2Divider,Log2Prescaler,Log2ClocksInTick,NanosecondsInTick,Log2TicksInKibitick,
+//      MicrosecondsInKibitick, ClocksInKibitick};     
       R::Power(1);
       R::SetCountToValue(ClocksInKibitick);
       R::EnableCompareInterrupts();
