@@ -22,7 +22,7 @@
 namespace avp {
   template<class HW_UART_, uint8_t Log2_TX_Buf_size=5, uint8_t Log2_RX_Buf_Size=5>
   class Serial {
-    // there is too ways to setup transmission. Either via circular buffer, or by giving a data
+    // there is two ways to buffer data. Either via circular buffer, or by giving a data
     // pointer and size to transmit
     // NOTE: we use circular buffer as much as we can, when we run out of space we use the block one,
     // when latter is in use write fails
@@ -31,12 +31,14 @@ namespace avp {
     static volatile CircBuffer<uint8_t, Log2_TX_Buf_size> BufferTX;
     static volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> BufferRX;
 
+    //! this function is called from RX_vect in HW_UART to store received byte in Circular buffer
     static bool StoreReceivedByte(uint8_t b) {
       if(!BufferRX.LeftToWrite()) return false;
       BufferRX.Write(b);
       return true;
     } // StoreReceivedByte
 
+    //! this function is called from UDRE_vect in HW_UART to get byte from Circular buffer to send
     static bool GetByteToSend(volatile uint8_t *b) {
       if(BufferTX.LeftToRead()) *b = BufferTX.Read();
       else if(TX_Size) { // circular buffer is empty and now block pointer
@@ -66,7 +68,7 @@ namespace avp {
 
     // ALL write function return false is overrun and true if OK
     
-    //! does not assume that Ptr remains valid afterwards, so it buffers data
+    //! does not assume that Ptr remains valid afterwards, so it buffers data into Circular buffer if it can or fails
     static bool write(const void *Ptr, size_t Size) { 
       if(ptr_busy()) return false; // if block is yet to be written we can not write to buffer, as buffer is read first
       if(Size <= BufferTX.LeftToWrite()) {
@@ -77,7 +79,7 @@ namespace avp {
       } else return false;
     }  // write
 
-    //! NOTE: !! stores pointer, so needs ptr and data to be valid until sent
+    //! NOTE: !! assumes that Ptr remains valid afterwards
     static bool write_ptr(const void *Ptr, size_t Size) { // stores ptr. Pointed data should not be destroyed until sent
       if(ptr_busy()) return false;
       TX_Ptr = (const uint8_t *)Ptr; TX_Size = Size;
