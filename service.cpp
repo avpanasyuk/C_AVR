@@ -7,8 +7,12 @@
 
 #include <stdlib.h>
 #include <AVP_LIBS/General/General.h>
+#include "TimeCounter.h"
 
 Fail::function malloc_failed_func = Fail::default_function;
+//namespace avp {
+//  constexpr uint8_t Log2Prescaler;
+//}
 
 void * operator new(size_t n) {
   void * const p = malloc(n);

@@ -21,17 +21,17 @@ template<class TimerRegs> struct HW_Timer: public TimerRegs {
   static void SetCountToValue(CounterType Value) { *TimerRegs::pOCRxA = Value; }
   static void EnableCompareInterrupts() { avp::set_high(*TimerRegs::pTIMSKx, TimerRegs::OCIExA); }
   //! @param value is 2 bits - COMxA1, COMxA0
-  static void SetCompareOutputMode(uint8_t Value) { 
-    avp::setbits(*TimerRegs::pTCCRxA, TimerRegs::COMxA0, 2, Value); 
+  static void SetCompareOutputMode(uint8_t Value) {
+    avp::setbits(*TimerRegs::pTCCRxA, TimerRegs::COMxA0, 2, Value);
   }
   //! @param PrescalerI is just a value from CSxx table, 0 stops clock. The prescaler set is equal to Prescalers[PrescalerI-1]
-  static void SetPrescaler(uint8_t PrescalerI) { 
-    avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI); 
+  static void SetPrescaler(uint8_t PrescalerI) {
+    avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI);
   }
   //! @retval index, or -1 if Value is not among prescalers
   static constexpr int8_t GetPrescalerIndex(uint16_t Value, int8_t CurIndex = 0) {
     return (1U << TimerRegs::Prescalers[CurIndex]) == Value?CurIndex:
-      (CurIndex == (N_ELEMENTS(TimerRegs::Prescalers)-1))?-1:GetPrescalerIndex(Value,CurIndex+1);
+           (CurIndex == (N_ELEMENTS(TimerRegs::Prescalers)-1))?-1:GetPrescalerIndex(Value,CurIndex+1);
   }
 }; // Timer
 
@@ -71,27 +71,28 @@ template<class TimerRegs> struct Timer16bits:public HW_Timer<TimerRegs> {
 }; // Timer16bits
 
 //! this timer definition should be used in processor specific header files only, where they define all timers for this processor
+//! __VA_ARGS__ are prescaler log2 values, like {0,3,6,8,10}
 #define TIMER_DEFS(I,nbits,PRRi,...) \
-struct __COMB(Timer,I,Regs) { \
-  typedef __COMB(uint,nbits,_t) CounterType ; \
-  static constexpr uint8_t Width = nbits; \
-  REG_PTR_DEF(TCCR,I,A) \
-  REG_PTR_DEF(TCCR,I,B) \
-  REG_PTR_DEF(OCR,I,A) \
-  REG_PTR_DEF(OCR,I,B) \
-  REG_PTR_DEF(PRR,PRRi,) \
-  REG_PTR_DEF(TCNT,I,) \
-  REG_PTR_DEF(TIMSK,I,) \
-  BIT_NUM_DEF(PRTIM,I,) \
-  BIT_NUM_DEF(COM,I,A0) \
-  BIT_NUM_DEF(WGM,I,2) \
-  BIT_NUM_DEF(WGM,I,1) \
-  BIT_NUM_DEF(WGM,I,0) \
-  BIT_NUM_DEF(CS,I,0) \
-  BIT_NUM_DEF(OCIE,I,A) \
-  static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
-}; \
-typedef __COMB(Timer,nbits,bits)<__COMB(Timer,I,Regs)> __COMB2(Timer,I);
+  struct __COMB(Timer,I,Regs) { \
+    typedef __COMB(uint,nbits,_t) CounterType ; \
+    static constexpr uint8_t Width = nbits; \
+    REG_PTR_DEF(TCCR,I,A) \
+    REG_PTR_DEF(TCCR,I,B) \
+    REG_PTR_DEF(OCR,I,A) \
+    REG_PTR_DEF(OCR,I,B) \
+    REG_PTR_DEF(PRR,PRRi,) \
+    REG_PTR_DEF(TCNT,I,) \
+    REG_PTR_DEF(TIMSK,I,) \
+    BIT_NUM_DEF(PRTIM,I,) \
+    BIT_NUM_DEF(COM,I,A0) \
+    BIT_NUM_DEF(WGM,I,2) \
+    BIT_NUM_DEF(WGM,I,1) \
+    BIT_NUM_DEF(WGM,I,0) \
+    BIT_NUM_DEF(CS,I,0) \
+    BIT_NUM_DEF(OCIE,I,A) \
+    static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
+  }; \
+  typedef __COMB(Timer,nbits,bits)<__COMB(Timer,I,Regs)> __COMB2(Timer,I);
 
 //TimerXRegs
 

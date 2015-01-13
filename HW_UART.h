@@ -60,8 +60,8 @@ namespace avp {
   }; //  HW_UARTx
 
   template<class UART_Regs> volatile uint8_t HW_UART<UART_Regs>::StatusRX;
-  template<class UART_Regs> typename HW_UART<UART_Regs>::t_StoreFunc HW_UART<UART_Regs>::StoreReceivedByte; 
-  template<class UART_Regs> typename HW_UART<UART_Regs>::t_GetFunc HW_UART<UART_Regs>::GetByteToSend; 
+  template<class UART_Regs> typename HW_UART<UART_Regs>::t_StoreFunc HW_UART<UART_Regs>::StoreReceivedByte;
+  template<class UART_Regs> typename HW_UART<UART_Regs>::t_GetFunc HW_UART<UART_Regs>::GetByteToSend;
 }; // namespace avp
 
 //! this UART definition should be used in processor specific header files only, where they define all timers for this processor
@@ -83,9 +83,12 @@ namespace avp {
     BIT_NUM_DEF(UDRIE,I,) \
   }; /* struct UARTxRegs */\
   typedef class avp::HW_UART<__COMB(UART,I,Regs)> __COMB2(UART,I);
-  
-  // ! this interrupt handler initialization is used only once in processor definition CPP file
-  #define UART_INIT(I,USARTi) \
+
+//! this interrupt handler initialization is used only once in processor definition CPP file
+//! @param I is the program identification index of this UART, whatever you want
+//! @param USARTi is the index assigned in AVR definition files to this UART registers and interrupts
+//! can be empty if there is only one UART and e.g. interrupts are UART_RX_vect
+#define UART_INIT(I,USARTi) \
   ISR(__COMB(USART,USARTi,_RX_vect)) { __COMB2(UART,I)::RX_vect(); } \
   ISR(__COMB(USART,USARTi,_UDRE_vect)) { __COMB2(UART,I)::UDRE_vect(); }
 
