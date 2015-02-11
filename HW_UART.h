@@ -57,6 +57,8 @@ namespace avp {
     }
 
     static void EnableTX_Interrupt() { avp::set_high(*R::pUCSRxB,R::UDRIEx); }
+		
+	static uint8_t GetStatusRX() { uint8_t temp = StatusRX; StatusRX = 0; return temp; }
   }; //  HW_UARTx
 
   template<class UART_Regs> volatile uint8_t HW_UART<UART_Regs>::StatusRX;
