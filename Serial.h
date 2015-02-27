@@ -20,7 +20,8 @@
 // then pointer.
 
 namespace avp {
-  template<class HW_UART_, uint8_t Log2_TX_Buf_size=5, uint8_t Log2_RX_Buf_Size=5>
+//! @tparam tSize - type of CircBuffer counter, should be big enough to fit both buffer sizes.
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size=5, uint8_t Log2_RX_Buf_Size=5, typename tSize=uint8_t>
   class Serial {
     // there is two ways to buffer data. Either via circular buffer, or by giving a data
     // pointer and size to transmit
@@ -28,8 +29,8 @@ namespace avp {
     // when latter is in use write fails
     static volatile const uint8_t *TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
     static volatile size_t TX_Size;
-    static volatile CircBuffer<uint8_t, Log2_TX_Buf_size> BufferTX;
-    static volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> BufferRX;
+    static volatile CircBuffer<uint8_t, Log2_TX_Buf_size, tSize> BufferTX;
+    static volatile CircBuffer<uint8_t, Log2_RX_Buf_Size, tSize> BufferRX;
 
     //! this function is called from RX_vect in HW_UART to store received byte in Circular buffer
     static bool StoreReceivedByte(uint8_t b) {
@@ -94,20 +95,22 @@ namespace avp {
       HW_UART_::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
       return true;
     } // write
+	
+	static uint8_t GetStatusRX() { return HW_UART_::GetStatusRX(); }
 
     template<typename T> static bool write(T const *p) { return write(p,sizeof(T)); }
     static bool write(char const *str) { return write(str, ::strlen(str)); } // no ending 0
     template<typename T> static bool write(T d) { return write(&d,sizeof(T)); }
     static bool write(int8_t d) { return write((uint8_t)d); }
   }; // UART
-  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile const uint8_t *Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
-  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile size_t Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::TX_Size = 0;
-  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile CircBuffer<uint8_t, Log2_TX_Buf_size> Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferTX;
-  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size>
-  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size> Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size>::BufferRX;
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size, typename tSize>
+  volatile const uint8_t *Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size, tSize>::TX_Ptr; // unbuffered transfer, pointer and size of memory block to transfer
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size, typename tSize>
+  volatile size_t Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size, tSize>::TX_Size = 0;
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size, typename tSize>
+  volatile CircBuffer<uint8_t, Log2_TX_Buf_size, tSize> Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size, tSize>::BufferTX;
+  template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_RX_Buf_Size, typename tSize>
+  volatile CircBuffer<uint8_t, Log2_RX_Buf_Size, tSize> Serial<HW_UART_,Log2_TX_Buf_size,Log2_RX_Buf_Size, tSize>::BufferRX;
 }; // avp
 
 
