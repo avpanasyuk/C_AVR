@@ -10,7 +10,7 @@
 #define HW_TIMER_H_
 
 #include <avr/io.h>
-#include <AVP_LIBS/General/General.h>
+#include <AVP_LIBS/General/BitBang.h>
 #include "General.h"
 
 //! @brief class for functions which work identical for 8 bit and 16 bit timers

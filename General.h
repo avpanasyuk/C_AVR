@@ -27,16 +27,4 @@ p##Pre##x##Post = &__COMB(Pre,I,Post);
 #define BIT_NUM_DEF(Pre,I,Post) \
 static constexpr uint8_t __COMB(Pre,x,Post) = _COMB(Pre,I,Post);
 
-namespace avp {
-  template<typename type, typename value_type=type> 
-  inline void setbits(volatile type &var, uint8_t lowest_bit, uint8_t numbits, value_type value) {
-    var = (var & ~make_mask<type>(lowest_bit,numbits)) | (type(value) << lowest_bit);
-  }
-}// avp
-
-
-
-
-
-
 #endif /* AVR_GENERAL_H_ */
