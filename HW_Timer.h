@@ -11,6 +11,7 @@
 
 #include <avr/io.h>
 #include <AVP_LIBS/General/BitBang.h>
+#include <AVP_LIBS/General/Macros.h>
 #include "General.h"
 
 //! @brief class for functions which work identical for 8 bit and 16 bit timers
@@ -72,8 +73,8 @@ template<class TimerRegs> struct Timer16bits:public HW_Timer<TimerRegs> {
 
 //! this timer definition should be used in processor specific header files only, where they define all timers for this processor
 #define TIMER_DEFS(I,nbits,PRRi,...) \
-struct __COMB(Timer,I,Regs) { \
-  typedef __COMB(uint,nbits,_t) CounterType ; \
+struct COMB3(Timer,I,Regs) { \
+  typedef COMB3(uint,nbits,_t) CounterType ; \
   static constexpr uint8_t Width = nbits; \
   REG_PTR_DEF(TCCR,I,A) \
   REG_PTR_DEF(TCCR,I,B) \
@@ -91,7 +92,7 @@ struct __COMB(Timer,I,Regs) { \
   BIT_NUM_DEF(OCIE,I,A) \
   static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
 }; \
-typedef __COMB(Timer,nbits,bits)<__COMB(Timer,I,Regs)> __COMB2(Timer,I);
+typedef COMB3(Timer,nbits,bits)<COMB3(Timer,I,Regs)> COMB2(Timer,I);
 
 //TimerXRegs
 

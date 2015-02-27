@@ -13,6 +13,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <AVP_LIBS/General/Math.h>
 #include "General.h"
 
 //! redefines register names and bit numbers in uniform fashion. Defines structure UARTxRegs with register
@@ -68,7 +69,7 @@ namespace avp {
 
 //! this UART definition should be used in processor specific header files only, where they define all timers for this processor
 #define UART_DEF(I,PRRi,USARTi) \
-  struct __COMB(UART,I,Regs) { \
+  struct COMB3(UART,I,Regs) { \
     REG_PTR_DEF(PRR,PRRi,) \
     BIT_NUM_DEF(PRUSART,I,) \
     REG_PTR_DEF(UBRR,I,) \
@@ -84,12 +85,12 @@ namespace avp {
     REG_PTR_DEF(UDR,I,) \
     BIT_NUM_DEF(UDRIE,I,) \
   }; /* struct UARTxRegs */\
-  typedef class avp::HW_UART<__COMB(UART,I,Regs)> __COMB2(UART,I);
+  typedef class avp::HW_UART<COMB3(UART,I,Regs)> COMB2(UART,I);
   
   // ! this interrupt handler initialization is used only once in processor definition CPP file
   #define UART_INIT(I,USARTi) \
-  ISR(__COMB(USART,USARTi,_RX_vect)) { __COMB2(UART,I)::RX_vect(); } \
-  ISR(__COMB(USART,USARTi,_UDRE_vect)) { __COMB2(UART,I)::UDRE_vect(); }
+  ISR(COMB3(USART,USARTi,_RX_vect)) { COMB2(UART,I)::RX_vect(); } \
+  ISR(COMB3(USART,USARTi,_UDRE_vect)) { COMB2(UART,I)::UDRE_vect(); }
 
 #endif
 

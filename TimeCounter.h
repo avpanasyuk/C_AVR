@@ -103,14 +103,14 @@ namespace avp {
 
 // ! Timer has to be 16-bit timer!
 #define DEFINE_TIME(TimerI) \
-  typedef avp::TimeCounter<__COMB(Timer,TimerI,Regs)> Time; \
+  typedef avp::TimeCounter<COMB3(Timer,TimerI,Regs)> Time; \
   static inline uint32_t millis() { return Time::kibiticks(); } \
   static inline uint32_t micros() { return Time::ticks(); }
 
 // initiates static Time class, should be called once in CPP file
 //! @tparam TimerI - index of timer
 #define INIT_TIME(TimerI) \
-  ISR(__COMB(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
+  ISR(COMB3(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
   Time __Time_Init___;
 
 

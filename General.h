@@ -19,12 +19,12 @@
 //! name PreXPost, where X is index. The Name of pointer will  be PrexPost. For example  REG_PTR_DEF(TCCR,0,A) 
 //! defines pTCCRxA to point to  TCCR0A 
 #define REG_PTR_DEF(Pre,I,Post) \
-static constexpr decltype(&__COMB(Pre,I,Post)) \
-p##Pre##x##Post = &__COMB(Pre,I,Post);
+static constexpr decltype(&COMB3(Pre,I,Post)) \
+p##Pre##x##Post = &COMB3(Pre,I,Post);
 
 //! defines constexpr uint8_t number equal to corresponding bit number. For example  REG_PTR_DEF(COM,0,A0)
 //! defines COMxA0 to be equal to COM0A0
 #define BIT_NUM_DEF(Pre,I,Post) \
-static constexpr uint8_t __COMB(Pre,x,Post) = _COMB(Pre,I,Post);
+static constexpr uint8_t COMB3(Pre,x,Post) = COMB3(Pre,I,Post);
 
 #endif /* AVR_GENERAL_H_ */

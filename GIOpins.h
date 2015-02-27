@@ -10,7 +10,8 @@
 #define GIOPINS_H_
 
 #include <avr/io.h>
-#include <AVP_LIBS/AVR/General.h>
+#include <AVP_LIBS/General/BitBang.h>
+#include <AVP_LIBS/General/Macros.h>
 
 namespace avp {
   enum PinModes {INPUT, OUTPUT};
@@ -33,6 +34,6 @@ namespace avp {
 }; // avp
 
 #define AVP_PIN(Port,Number) \
-  avp::Pin<uint16_t(&_COMB2(DDR,Port)),uint16_t(&_COMB2(PORT,Port)),uint16_t(&_COMB2(PIN,Port)),Number,(#Port)[0]>
+  avp::Pin<uint16_t(&COMB2(DDR,Port)),uint16_t(&COMB2(PORT,Port)),uint16_t(&COMB2(PIN,Port)),Number,(#Port)[0]>
 
 #endif /* GIOPINS_H_ */
