@@ -14,21 +14,23 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <AVP_LIBS/General/Math.h>
+#include <AVP_LIBS/General/BitBang.h>
 #include "General.h"
 
 //! redefines register names and bit numbers in uniform fashion. Defines structure UARTxRegs with register
 //! addresses and bit numbers
 
-
 namespace avp {
   template<class UART_Regs>  class HW_UART: public UART_Regs {
     typedef UART_Regs R; // just to make it shorter
     typedef bool (*t_StoreFunc)(uint8_t b);
+    static t_StoreFunc StoreReceivedByte;
+
+    //! WRITING TO *b immediately sends byte, so GetByteToSend should do it ONLY ONCE !
     typedef bool (*t_GetFunc)(volatile uint8_t *b);
+    static t_GetFunc GetByteToSend;
 
     static volatile uint8_t StatusRX;
-    static t_StoreFunc StoreReceivedByte;
-    static t_GetFunc GetByteToSend;
     enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
    public:
     static uint32_t Init(uint32_t baud, t_StoreFunc pS, t_GetFunc pG) {
@@ -54,7 +56,7 @@ namespace avp {
 
     // we have top free buffer first and then pointer. Until pointer is freed we can not write any more
     static void UDRE_vect() __attribute__((always_inline)) {
-      if(!GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx);
+      if(!GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx); // disable interrupt
     }
 
     static void EnableTX_Interrupt() { avp::set_high(*R::pUCSRxB,R::UDRIEx); }
@@ -85,9 +87,9 @@ namespace avp {
     REG_PTR_DEF(UDR,I,) \
     BIT_NUM_DEF(UDRIE,I,) \
   }; /* struct UARTxRegs */\
-  typedef class avp::HW_UART<COMB3(UART,I,Regs)> COMB2(UART,I);
+  typedef class avp::HW_UART<COMB3(UART,I,Regs)> COMB2(UART,I);  //! creates UART0, UART1 etc. aliases to use
   
-  // ! this interrupt handler initialization is used only once in processor definition CPP file
+  //! this interrupt handler initialization is used only once in processor definition CPP file
   #define UART_INIT(I,USARTi) \
   ISR(COMB3(USART,USARTi,_RX_vect)) { COMB2(UART,I)::RX_vect(); } \
   ISR(COMB3(USART,USARTi,_UDRE_vect)) { COMB2(UART,I)::UDRE_vect(); }

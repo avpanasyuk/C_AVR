@@ -59,8 +59,6 @@ namespace avp {
     } //  InterruptHandler
 
     static void Init() {
-//      volatile uint16_t Idle[] = {Log2Divider,Log2Prescaler,Log2ClocksInTick,NanosecondsInTick,Log2TicksInKibitick,
-//      MicrosecondsInKibitick, ClocksInKibitick};     
       R::Power(1);
       R::SetCountToValue(ClocksInKibitick);
       R::EnableCompareInterrupts();
@@ -90,15 +88,6 @@ namespace avp {
 
 
   template<class TimerRegs> volatile uint32_t TimeCounter<TimerRegs>::Kibiticks = 0;
-
-  //! @tparam T should be unsigned!
-  //! @tparam TickFunction is either Time::kibiticks or Time::ticks
-  template<uint32_t (*TickFunction)(), typename T=uint32_t> class TimeOut {
-    const T Expires;
-   public:
-    TimeOut(T Timeout):Expires(TickFunction() + Timeout) {}
-    operator bool() { return (T(TickFunction()) - Expires) < ((~T(0))/2); }
-  }; // Out
 }; // namespace avp
 
 // ! Timer has to be 16-bit timer!
