@@ -3,6 +3,8 @@
 *
 * Created: 6/28/2014 10:06:08 PM
 *  Author: panasyuk
+*  In default mode we are running ADC full speed oversampling and averaging
+*  in 
 */
 
 
@@ -12,7 +14,8 @@
 #include <avr/io.h>
 #include <AVP_LIBS/AVR/General.h>
 
-//! NOTE: ADC clock frequency is between 50 and 200 kHz, normal conversion takes 13 cycles
+//! NOTE: ADC clock frequency is between 50 and 200 kHz to get best resolution, will set 200 kHz
+//! normal conversion takes 13 cycles
 namespace avp_ADC {
   // Next two function are dealing with a sleep state, first conversion takes the same time
   inline void PowerOn() { avp::set_low(PRR,PRADC); }

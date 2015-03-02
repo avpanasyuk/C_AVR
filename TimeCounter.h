@@ -60,7 +60,7 @@ namespace avp {
 
     static void Init() {
       R::Power(1);
-      R::SetCountToValue(ClocksInKibitick);
+      R::SetCountToValueA(ClocksInKibitick);
       R::EnableCompareInterrupts();
       R::SetCompareOutputMode(0);
       R::SetWaveformGenerationMode(0);
@@ -90,13 +90,15 @@ namespace avp {
   template<class TimerRegs> volatile uint32_t TimeCounter<TimerRegs>::Kibiticks = 0;
 }; // namespace avp
 
-// ! Timer has to be 16-bit timer!
+//! following defile aliases "Time" class to the specified timer. This class maintains "system"
+//! clock. "standard" functions millis() and micros() are defined as well, returning corresponding time marks
+//! Timer has to be 16-bit timer!
 #define DEFINE_TIME(TimerI) \
   typedef avp::TimeCounter<COMB3(Timer,TimerI,Regs)> Time; \
   static inline uint32_t millis() { return Time::kibiticks(); } \
   static inline uint32_t micros() { return Time::ticks(); }
 
-// initiates static Time class, should be called once in CPP file
+//! initiates static Time class, should be called once in CPP file
 //! @tparam TimerI - index of timer
 #define INIT_TIME(TimerI) \
   ISR(COMB3(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
