@@ -25,11 +25,11 @@ template<class TimerRegs> struct HW_Timer: public TimerRegs {
   //! @param A is 2 bits of TCCRxA register - COMxA1, COMxA0
   //! @param B is 2 bits of TCCRxB register - COMxB1, COMxB0
   static void SetCompareOutputMode(uint8_t A, uint8_t B=0) { 
-    avp::setbits<volatile uint8_t>(*TimerRegs::pTCCRxA, TimerRegs::COMxB0, 4, (A<<2) | B); 
+    avp::setbits(*TimerRegs::pTCCRxA, TimerRegs::COMxB0, 4, (A<<2) | B); 
   }
   //! @param PrescalerI is just a value from CSxx table, 0 stops clock. The prescaler set is equal to Prescalers[PrescalerI-1]
   static void SetPrescaler(uint8_t PrescalerI) { 
-    avp::setbits<volatile uint8_t>(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI); 
+    avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI); 
   }
   //! @retval index, or -1 if Value is not among prescalers
   static constexpr int8_t GetPrescalerIndex(uint16_t Value, int8_t CurIndex = 0) {
@@ -51,8 +51,8 @@ template<class TimerRegs> struct Timer8bits:public HW_Timer<TimerRegs> {
     SetWaveformGenerationMode(3);
   }
   static void SetWaveformGenerationMode(uint8_t Value) {
-    avp::setbits<volatile uint8_t>(*R::pTCCRxA, R::WGMx0, 2, Value & 0x3);
-    avp::setbit<volatile uint8_t>(*R::pTCCRxB, R::WGMx2, Value >> 2);
+    avp::setbits(*R::pTCCRxA, R::WGMx0, 2, Value & 0x3);
+    avp::setbit(*R::pTCCRxB, R::WGMx2, Value >> 2);
   }
 }; // Timer8bits
 
@@ -68,8 +68,8 @@ template<class TimerRegs> struct Timer16bits:public HW_Timer<TimerRegs> {
     SetWaveformGenerationMode(4|(NumBitIndex+1)); // CTC mode
   }
   static void SetWaveformGenerationMode(uint8_t Value) {
-    avp::setbits<volatile uint8_t>(*R::pTCCRxA, R::WGMx0, 2, Value & 0x3);
-    avp::setbits<volatile uint8_t>(*R::pTCCRxB, R::WGMx2, 2, Value >> 2);
+    avp::setbits(*R::pTCCRxA, R::WGMx0, 2, Value & 0x3);
+    avp::setbits(*R::pTCCRxB, R::WGMx2, 2, Value >> 2);
   }
 }; // Timer16bits
 

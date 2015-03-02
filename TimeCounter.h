@@ -19,7 +19,7 @@ INIT_TIME(1)
 #ifndef TIME_COUNTER_H_
 #define TIME_COUNTER_H_
 
-#include <AVP_LIBS/General/General.h>
+#include <AVP_LIBS/General/Math.h>
 #include "HW_Timer.h"
 #include "service.h"
 

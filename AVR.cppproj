@@ -211,6 +211,9 @@
     <OutputPath>bin\Debug_ATmega1284\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ADC.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="ADC.h">
       <SubType>compile</SubType>
     </Compile>
