@@ -23,5 +23,7 @@ TIMER_DEFS(2,8,, {0,3,5,6,7,8,10})
 #include "HW_UART.h"
 UART_DEF(0,,0)
 
+#define ADC_RES 10 // bits
+
 
 #endif /* ATMEGA328P_TIMERS_H_ */

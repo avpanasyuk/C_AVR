@@ -22,7 +22,7 @@ template<class Timer> struct PWM: public Timer {
     Timer::SetPrescaler(1); // highest frequency
   } // Init
 
-  PWM() { Init(); }
+  //   PWM() { Init(); }
 
   static void SetDuty(typename Timer::CounterType Value) { Timer::SetCountToValue(Value); }
 }; // PWM
