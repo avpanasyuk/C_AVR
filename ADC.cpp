@@ -7,7 +7,7 @@ namespace avp {
     // FREE RUNNING - ADC does one sample after another and integrate into SamplesSum, SamplesNum
     // default interrupt handler runs maximum oversampling - it adds result to SamplesSum and SamplesNum and starts new convertion
     static uint32_t SamplesSum;
-    static uint16_t SamplesNum;
+    static volatile uint16_t SamplesNum;
 
 
     __weak void ConvertionComplete_Interrupt() {
@@ -31,6 +31,7 @@ namespace avp {
       EnableInterrupts();
       return Result;
     }
+    uint16_t GetCurrentNumSamples() { return SamplesNum; }
   }
 }
 

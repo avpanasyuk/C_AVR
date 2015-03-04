@@ -33,6 +33,7 @@ namespace avp {
     //! how 10 bits are adjusted in 16-bits output
     inline void SetLeftAdjust(bool Set=true) { avp::setbit(ADMUX,ADLAR,Set?1:0); }
     enum Channel { CH0 /* from 0 to 7 */,  TEMP=8, REF_1_1V=14, GND=15 };
+    inline void SelectChannel( uint8_t /* enum Channel */ Ch ) { avp::setbits(ADMUX, MUX0, 4, Ch); }
 
     // ********* ADCSRA ************
     // This is major disable, first conversion after Enable takes longer
@@ -72,6 +73,7 @@ namespace avp {
     // Free Running - oversampling at max
     void StartFreeRunning();
     uint16_t ReadFreeRun();
+    uint16_t GetCurrentNumSamples();
   } // ADC_
 } // avp
 
