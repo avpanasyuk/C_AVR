@@ -72,6 +72,15 @@ class HW_UART: public UART_Regs {
       StatusRX = 0;
       return temp;
     }
+
+    static bool IsOverrun() { return GetStatusRX() & (OVERRAN | DOR); }
+
+IGNORE(-Wunused-but-set-variable)
+    static void FlushRX() {
+      volatile uint8_t dummy;
+      while ( *R::pUCSRxA & (1<<R::RXCx) ) dummy = *R::pUDRx;
+    }
+STOP_IGNORING
 }; //  HW_UARTx
 
 // following defines are for conveniense only, do not use elsewhere
@@ -94,6 +103,7 @@ T1 typename T2::t_GetFunc T2::GetByteToSend;
     REG_PTR_DEF(UCSR,I,C) \
     BIT_NUM_DEF(U2X,I,) \
     BIT_NUM_DEF(RXEN,I,) \
+    BIT_NUM_DEF(RXC,I,) \
     BIT_NUM_DEF(TXEN,I,) \
     BIT_NUM_DEF(RXCIE,I,) \
     BIT_NUM_DEF(UPE,I,) \
