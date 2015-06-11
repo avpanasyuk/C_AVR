@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <AVP_LIBS/General/General.h>
+#include <AVP_LIBS/AVR/service.h>
 
 Fail::function malloc_failed_func = Fail::default_function;
 
@@ -38,5 +39,9 @@ extern "C" {
 
   int atexit( void (*func)(void)) {return -1;}
   int __cxa_atexit() {return -1;}
+    
+    // we use watchdog for reboot and have to disable watchdog on boot
+   void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+   void wdt_init(void) { MCUSR = 0; wdt_disable(); }
 };
 

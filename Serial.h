@@ -68,6 +68,7 @@ namespace avp {
     // ALL write function return false is overrun and true if OK
     
     //! does not assume that Ptr remains valid afterwards, so it buffers data
+    //! @param Size is in bytes
     static bool write(const void *Ptr, size_t Size) { 
       if(ptr_busy()) return false; // if block is yet to be written we can not write to buffer, as buffer is read first
       if(Size <= BufferTX.LeftToWrite()) {

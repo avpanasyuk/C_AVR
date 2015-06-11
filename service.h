@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <avr/interrupt.h.>
+#include <avr/wdt.h>
 #include <AVP_LIBS/General/General.h>
 
 extern "C"  int freeRam ();
@@ -36,5 +37,6 @@ public:
 }; // ISR_Blocker
 
 static inline void hang_cpu() { cli(); volatile uint8_t stop=1; while(stop); }
+static inline void soft_reset() { wdt_enable(WDTO_15MS);  hang_cpu(); }
 
 #endif /* SERVICE_H_ */
