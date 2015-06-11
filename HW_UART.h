@@ -55,6 +55,8 @@ namespace avp {
     static void UDRE_vect() __attribute__((always_inline)) {
       if(!GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx);
     }
+    
+    static bool IsTXdone() {return avp::getbit(*R::pUCSRxB,R::UDRIEx) == 0; }
 
     static void EnableTX_Interrupt() { avp::set_high(*R::pUCSRxB,R::UDRIEx); }
 		

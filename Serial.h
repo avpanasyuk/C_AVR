@@ -56,6 +56,7 @@ namespace avp {
 
     static uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
     static bool ptr_busy() { return  TX_Size != 0; }
+    static bool IsTXdone() { return HW_UART_::IsTXdone(); }
 
     //! stores character along pd, returns true if there was a character
     static bool ReadInto(uint8_t *pd) {
