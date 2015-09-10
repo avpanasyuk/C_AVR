@@ -21,7 +21,7 @@
 //! addresses and bit numbers
 
 namespace avp {
-template<class UART_Regs>
+template<class UART_Regs, uint32_t baud>
 class HW_UART: public UART_Regs {
     typedef UART_Regs R; // just to make it shorter
     typedef bool (*t_StoreFunc)(uint8_t b);
@@ -34,7 +34,7 @@ class HW_UART: public UART_Regs {
     static volatile uint8_t StatusRX;
     enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
   public:
-    static uint32_t Init(uint32_t baud, t_StoreFunc pS, t_GetFunc pG) {
+    static uint32_t Init(t_StoreFunc pS, t_GetFunc pG) {
       StoreReceivedByte = pS;
       GetByteToSend = pG;
       *R::pPRRx &= ~(1<<R::PRUSARTx);
@@ -84,8 +84,8 @@ STOP_IGNORING
 }; //  HW_UARTx
 
 // following defines are for conveniense only, do not use elsewhere
-# define T1 template<class UART_Regs>
-# define T2 HW_UART<UART_Regs>
+# define T1 template<class UART_Regs, uint32_t baud>
+# define T2 HW_UART<UART_Regs, baud>
 
 T1 volatile uint8_t T2::StatusRX;
 T1 typename T2::t_StoreFunc T2::StoreReceivedByte;
