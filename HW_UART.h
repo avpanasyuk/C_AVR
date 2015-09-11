@@ -21,8 +21,8 @@
 //! addresses and bit numbers
 
 namespace avp {
-template<class UART_Regs, uint32_t baud>
-class HW_UART: public UART_Regs {
+  template<class UART_Regs>
+  class HW_UART: public UART_Regs {
     typedef UART_Regs R; // just to make it shorter
     typedef bool (*t_StoreFunc)(uint8_t b);
     static t_StoreFunc StoreReceivedByte;
@@ -34,9 +34,7 @@ class HW_UART: public UART_Regs {
     static volatile uint8_t StatusRX;
     enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
   public:
-    static uint32_t Init(t_StoreFunc pS, t_GetFunc pG) {
-      StoreReceivedByte = pS;
-      GetByteToSend = pG;
+    static uint32_t Init(uint32_t baud) {
       *R::pPRRx &= ~(1<<R::PRUSARTx);
       *R::pUBRRx = avp::RoundRatio(F_CPU,baud<<4)-1;
       *R::pUCSRxA &= ~(1<<R::U2Xx); // not using special 2x mode
@@ -46,6 +44,11 @@ class HW_UART: public UART_Regs {
       sei();
       return avp::RoundRatio(F_CPU,uint32_t(*R::pUBRRx+1)<<4);
     }
+
+    static void SetCallBacks(t_StoreFunc pS, t_GetFunc pG) {
+      StoreReceivedByte = pS;
+      GetByteToSend = pG;
+    } //  SetCallBacks
 
     static void RX_vect() __attribute__((always_inline)) { // checks whether serial protocol OK
       StatusRX |= (7<<R::UPEx) & *R::pUCSRxA;
@@ -75,21 +78,21 @@ class HW_UART: public UART_Regs {
 
     static bool IsOverrun() { return GetStatusRX() & (OVERRAN | DOR); }
 
-IGNORE(-Wunused-but-set-variable)
+    IGNORE(-Wunused-but-set-variable)
     static void FlushRX() {
       volatile uint8_t dummy;
       while ( *R::pUCSRxA & (1<<R::RXCx) ) dummy = *R::pUDRx;
     }
-STOP_IGNORING
-}; //  HW_UARTx
+    STOP_IGNORING
+  }; //  HW_UARTx
 
 // following defines are for conveniense only, do not use elsewhere
-# define T1 template<class UART_Regs, uint32_t baud>
-# define T2 HW_UART<UART_Regs, baud>
+# define T1 template<class UART_Regs>
+# define T2 HW_UART<UART_Regs>
 
-T1 volatile uint8_t T2::StatusRX;
-T1 typename T2::t_StoreFunc T2::StoreReceivedByte;
-T1 typename T2::t_GetFunc T2::GetByteToSend;
+  T1 volatile uint8_t T2::StatusRX;
+  T1 typename T2::t_StoreFunc T2::StoreReceivedByte;
+  T1 typename T2::t_GetFunc T2::GetByteToSend;
 }; // namespace avp
 
 //! this UART definition should be used in processor specific header files only, where they define all timers for this processor
