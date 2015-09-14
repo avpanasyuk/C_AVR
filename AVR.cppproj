@@ -451,7 +451,7 @@
     <Compile Include="HW_UART.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="I2C.h">
+    <Compile Include="TWI_I2C.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="MCP23___.h">

@@ -5,12 +5,12 @@
 #include <AVP_LIBS/General/Macros.h>
 #include <AVP_LIBS/AVR/GIOpins.h>
 #include "HardSPI.h"
-#include "I2C.h"
+#include "TWI_I2C.h"
 
 namespace avp {
   class NullClass {};
   //! @tparam Comm - communication class, like SPI from HardSPI or I2C_master or HW_UART
-  //! which provides transfer functions
+  //! which provides Init(), send(uint8_t) and receive(uint8_t *ptr, uint16_t *size) functions
   //! @tparam CommWrapper - class which has in constructor actions for transfer preparation, in
   //!         destructor - transfer cancellation
   template<class Comm, class CommWrapper = NullClass> class MCP23xxx {
@@ -40,6 +40,7 @@ namespace avp {
 
   public:
     static void Init() {
+      Comm::Init();
       // it is freaking complicated chip
       // Using Byte mode, so we are not automatically increment anything
       Set(0x0B, 1<<BANK); // there is a problem with setting IOCON initially. The address depends
@@ -66,12 +67,15 @@ namespace avp {
   template<class SPI, class nCS_pin> class MCP23S18 : public MCP23xxx<SPI, SPI_Wrapper<SPI,nCS_pin>> {
   }; // MCP23S18
 
-  template<uint32_t ClkF, uint8_t SlaveAddress> class MCP23017 : public MCP23xxx<I2C_master<ClkF,SlaveAddress>> {
+  //! @tparam SlaveAddress - what is set with A0-2 pins
+  template<uint32_t ClkF, uint8_t SlaveAddress>
+  class MCP23017 : public MCP23xxx<I2C_master<ClkF,SlaveAddress + 0x20>> {
   }; // MCP23017
 
   //! @tparam MCP23_chip = subclass of MCP23xxx template
   //! @tparam IsA - MCP23xxx has A and B ports, which one is it
-  template<class MCP23_chip, bool IsA> class MCP23_Port {
+  template<class MCP23_chip, bool IsA>
+  class MCP23_Port {
     static uint8_t Bits; // stores current port value, so we can change individual pins
 
   public:

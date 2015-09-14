@@ -36,11 +36,11 @@ namespace avp {
     typedef Timer16bits<TimerRegs> R;
     static constexpr uint8_t Log2Divider = avp::log2(F_CPU/1000000UL);
 
-    //! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of 
-    //! @retval Prescaler index from Prescalers vector 
+    //! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of
+    //! @retval Prescaler index from Prescalers vector
     static constexpr uint8_t FindPrescalerI(uint8_t CurI=0) {
       return CurI == N_ELEMENTS(R::Prescalers) || R::Prescalers[CurI] > Log2Divider?
-        CurI-1:FindPrescalerI(CurI+1);
+             CurI-1:FindPrescalerI(CurI+1);
     }
     static constexpr uint8_t Log2Prescaler = R::Prescalers[FindPrescalerI()];
     static constexpr uint8_t Log2ClocksInTick =  Log2Divider - Log2Prescaler;
