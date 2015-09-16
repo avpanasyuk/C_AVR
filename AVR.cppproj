@@ -451,10 +451,16 @@
     <Compile Include="HW_UART.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="TWI_I2C.h">
+    <Compile Include="MCP23017.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="MCP23___.h">
+    <Compile Include="MCP23S18.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="MCP23_Port.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="TWI_I2C.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="PWM.h">
