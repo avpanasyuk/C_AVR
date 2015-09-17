@@ -116,7 +116,8 @@ namespace avp {
   }; /* struct UARTxRegs */\
   typedef class avp::HW_UART<COMB3(UART,I,Regs)> COMB2(UART,I);  //! creates UART0, UART1 etc. aliases to use
 
-//! this interrupt handler initialization is used only once in processor definition CPP file
+//! this interrupt handler initialization is used only once in processor definition CPP file,
+//! DO NOT USE IN YOUR CODE
 #define UART_INIT(I,USARTi) \
   ISR(COMB3(USART,USARTi,_RX_vect)) { COMB2(UART,I)::RX_vect(); } \
   ISR(COMB3(USART,USARTi,_UDRE_vect)) { COMB2(UART,I)::UDRE_vect(); }
