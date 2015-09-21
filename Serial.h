@@ -47,14 +47,15 @@ namespace avp {
       return true;
     } //  GetByteToSend
 
-   public:
+  public:
     static uint32_t Init(uint32_t baud) {
       return HW_UART_::Init(baud,StoreReceivedByte,GetByteToSend);
     } //  Init
-    
+
     Serial(uint32_t baud) { Init(baud); }
 
-    static uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
+    static tSize InTransmitBuffer() { return BufferTX.LeftToRead(); }
+    static tSize InReadBuffer() { return BufferRX.LeftToRead(); }
     static bool ptr_busy() { return  TX_Size != 0; }
     static bool IsTXdone() { return HW_UART_::IsTXdone(); }
 
@@ -67,10 +68,10 @@ namespace avp {
     } // ReadInto
 
     // ALL write function return false is overrun and true if OK
-    
+
     //! does not assume that Ptr remains valid afterwards, so it buffers data
     //! @param Size is in bytes
-    static bool write(const void *Ptr, size_t Size) { 
+    static bool write(const void *Ptr, size_t Size) {
       if(ptr_busy()) return false; // if block is yet to be written we can not write to buffer, as buffer is read first
       if(Size <= BufferTX.LeftToWrite()) {
         const uint8_t *p = (const uint8_t *)Ptr;
@@ -95,8 +96,8 @@ namespace avp {
       HW_UART_::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
       return true;
     } // write
-	
-	static uint8_t GetStatusRX() { return HW_UART_::GetStatusRX(); }
+
+    static uint8_t GetStatusRX() { return HW_UART_::GetStatusRX(); }
 
     template<typename T> static bool write(T const *p) { return write(p,sizeof(T)); }
     static bool write(char const *str) { return write(str, ::strlen(str)); } // no ending 0
