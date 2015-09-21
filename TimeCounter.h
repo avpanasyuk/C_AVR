@@ -19,7 +19,7 @@ INIT_TIME(1)
 #ifndef TIME_COUNTER_H_
 #define TIME_COUNTER_H_
 
-#include <AVP_LIBS/General/General.h>
+#include <AVP_LIBS/General/Math.h>
 #include "HW_Timer.h"
 #include "service.h"
 
@@ -36,11 +36,11 @@ namespace avp {
     typedef Timer16bits<TimerRegs> R;
     static constexpr uint8_t Log2Divider = avp::log2(F_CPU/1000000UL);
 
-    //! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of 
-    //! @retval Prescaler index from Prescalers vector 
+    //! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of
+    //! @retval Prescaler index from Prescalers vector
     static constexpr uint8_t FindPrescalerI(uint8_t CurI=0) {
       return CurI == N_ELEMENTS(R::Prescalers) || R::Prescalers[CurI] > Log2Divider?
-        CurI-1:FindPrescalerI(CurI+1);
+             CurI-1:FindPrescalerI(CurI+1);
     }
     static constexpr uint8_t Log2Prescaler = R::Prescalers[FindPrescalerI()];
     static constexpr uint8_t Log2ClocksInTick =  Log2Divider - Log2Prescaler;
@@ -59,10 +59,8 @@ namespace avp {
     } //  InterruptHandler
 
     static void Init() {
-//      volatile uint16_t Idle[] = {Log2Divider,Log2Prescaler,Log2ClocksInTick,NanosecondsInTick,Log2TicksInKibitick,
-//      MicrosecondsInKibitick, ClocksInKibitick};     
       R::Power(1);
-      R::SetCountToValue(ClocksInKibitick);
+      R::SetCountToValueA(ClocksInKibitick);
       R::EnableCompareInterrupts();
       R::SetCompareOutputMode(0);
       R::SetWaveformGenerationMode(0);
@@ -90,27 +88,20 @@ namespace avp {
 
 
   template<class TimerRegs> volatile uint32_t TimeCounter<TimerRegs>::Kibiticks = 0;
-
-  //! @tparam T should be unsigned!
-  //! @tparam TickFunction is either Time::kibiticks or Time::ticks
-  template<uint32_t (*TickFunction)(), typename T=uint32_t> class TimeOut {
-    const T Expires;
-   public:
-    TimeOut(T Timeout):Expires(TickFunction() + Timeout) {}
-    operator bool() { return (T(TickFunction()) - Expires) < ((~T(0))/2); }
-  }; // Out
 }; // namespace avp
 
-// ! Timer has to be 16-bit timer!
+//! following defile aliases "Time" class to the specified timer. This class maintains "system"
+//! clock. "standard" functions millis() and micros() are defined as well, returning corresponding time marks
+//! Timer has to be 16-bit timer!
 #define DEFINE_TIME(TimerI) \
-  typedef avp::TimeCounter<__COMB(Timer,TimerI,Regs)> Time; \
+  typedef avp::TimeCounter<COMB3(Timer,TimerI,Regs)> Time; \
   static inline uint32_t millis() { return Time::kibiticks(); } \
   static inline uint32_t micros() { return Time::ticks(); }
 
-// initiates static Time class, should be called once in CPP file
+//! initiates static Time class, should be called once in CPP file
 //! @tparam TimerI - index of timer
 #define INIT_TIME(TimerI) \
-  ISR(__COMB(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
+  ISR(COMB3(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
   Time __Time_Init___;
 
 

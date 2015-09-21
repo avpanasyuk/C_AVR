@@ -6,14 +6,14 @@
  */
 
 #include <stdlib.h>
+#include <AVP_LIBS/General/Macros.h>
+#include <AVP_LIBS/General/Error.h>
 #include <AVP_LIBS/General/General.h>
 #include <AVP_LIBS/AVR/service.h>
 
-Fail::function malloc_failed_func = Fail::default_function;
-
 void * operator new(size_t n) {
   void * const p = malloc(n);
-  if(p == NULL) (*malloc_failed_func)();
+  if(p == NULL) avp::major_fail(1);
   return p;
 }
 

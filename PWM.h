@@ -16,15 +16,16 @@
 //! Fast Mode 8-bit PWM generator. The signal apperas on OCxA pin of the corresponding timer. You should enable this pin for output
 template<class Timer> struct PWM: public Timer {
   // OCxA port is used and should by set to output mode elsewhere
-  static void Init() {
+  static void Init(bool A=true, bool B=false) {
     Timer::Power(1);
-    Timer::InitPWM();
+    Timer::InitPWM(A,B);
     Timer::SetPrescaler(1); // highest frequency
   } // Init
 
-  PWM() { Init(); }
+  // PWM(bool A=true, bool B=false) { Init(A,B); }
 
-  static void SetDuty(typename Timer::CounterType Value) { Timer::SetCountToValue(Value); }
+  static void SetDutyA(typename Timer::CounterType Value) { Timer::SetCountToValueA(Value); }
+  static void SetDutyB(typename Timer::CounterType Value) { Timer::SetCountToValueB(Value); }
 }; // PWM
 
 #endif /* PWM_H_ */

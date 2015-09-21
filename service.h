@@ -18,7 +18,6 @@
 extern "C"  int freeRam ();
 extern void * operator new(size_t n);
 extern void operator delete(void * p);
-extern Fail::function malloc_failed_func;
 
 extern "C" void __cxa_pure_virtual();
 extern "C" void _pure_virtual(void);
