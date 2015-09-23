@@ -21,8 +21,9 @@
 //! addresses and bit numbers
 
 namespace avp {
-  template<class UART_Regs>
-  class HW_UART: public UART_Regs {
+#define _TEMPLATE_DECL_  template<class UART_Regs, uint32_t baud>
+
+  _TEMPLATE_DECL_ class HW_UART: public UART_Regs {
       typedef UART_Regs R; // just to make it shorter
       typedef bool (*t_StoreFunc)(uint8_t b);
       static t_StoreFunc StoreReceivedByte;
@@ -34,7 +35,7 @@ namespace avp {
       static volatile uint8_t StatusRX;
       enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
     public:
-      static uint32_t Init(uint32_t baud) {
+      static uint32_t Init() {
         *R::pPRRx &= ~(1<<R::PRUSARTx);
         *R::pUBRRx = avp::RoundRatio(F_CPU,baud<<4)-1;
         *R::pUCSRxA &= ~(1<<R::U2Xx); // not using special 2x mode
@@ -85,12 +86,14 @@ namespace avp {
   }; //  HW_UARTx
 
 // following defines are for conveniense only, do not use elsewhere
-# define T1 template<class UART_Regs>
-# define T2 HW_UART<UART_Regs>
+# define _TEMPLATE_SPEC_ HW_UART<UART_Regs,baud>
 
-  T1 volatile uint8_t T2::StatusRX;
-  T1 typename T2::t_StoreFunc T2::StoreReceivedByte;
-  T1 typename T2::t_GetFunc T2::GetByteToSend;
+  _TEMPLATE_DECL_ volatile uint8_t _TEMPLATE_SPEC_::StatusRX;
+  _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::t_StoreFunc _TEMPLATE_SPEC_::StoreReceivedByte;
+  _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::t_GetFunc _TEMPLATE_SPEC_::GetByteToSend;
+
+# undef _TEMPLATE_DECL_
+# undef _TEMPLATE_SPEC_
 }; // namespace avp
 
 //! this UART definition should be used in processor specific header files only, where they define all timers for this processor
