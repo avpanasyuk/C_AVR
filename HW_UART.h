@@ -23,69 +23,65 @@
 namespace avp {
   template<class UART_Regs>
   class HW_UART: public UART_Regs {
-    typedef UART_Regs R; // just to make it shorter
-    typedef bool (*t_StoreFunc)(uint8_t b);
-    static t_StoreFunc StoreReceivedByte;
+      typedef UART_Regs R; // just to make it shorter
+      typedef bool (*t_StoreFunc)(uint8_t b);
+      static t_StoreFunc StoreReceivedByte;
 
-    //! WRITING TO *b immediately sends byte, so GetByteToSend should do it ONLY ONCE !
-    typedef bool (*t_GetFunc)(volatile uint8_t *b);
-    static t_GetFunc GetByteToSend;
+      //! WRITING TO *b immediately sends byte, so GetByteToSend should do it ONLY ONCE !
+      typedef bool (*t_GetFunc)(volatile uint8_t *b);
+      static t_GetFunc GetByteToSend;
 
-    static volatile uint8_t StatusRX;
-    enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
-  public:
-    static uint32_t Init(uint32_t baud) {
-      *R::pPRRx &= ~(1<<R::PRUSARTx);
-      *R::pUBRRx = avp::RoundRatio(F_CPU,baud<<4)-1;
-      *R::pUCSRxA &= ~(1<<R::U2Xx); // not using special 2x mode
-      // enable transmitter and receiver and receiver interrupts
-      *R::pUCSRxB = (1<<R::RXENx) | (1<<R::TXENx) | (1<<R::RXCIEx);
-      *R::pUCSRxC = (3<<R::UCSZx0); // Frame definition
-      sei();
-      return avp::RoundRatio(F_CPU,uint32_t(*R::pUBRRx+1)<<4);
-    }
+      static volatile uint8_t StatusRX;
+      enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
+    public:
+      static uint32_t Init(uint32_t baud) {
+        *R::pPRRx &= ~(1<<R::PRUSARTx);
+        *R::pUBRRx = avp::RoundRatio(F_CPU,baud<<4)-1;
+        *R::pUCSRxA &= ~(1<<R::U2Xx); // not using special 2x mode
+        // enable transmitter and receiver and receiver interrupts
+        *R::pUCSRxB = (1<<R::RXENx) | (1<<R::TXENx) | (1<<R::RXCIEx);
+        *R::pUCSRxC = (3<<R::UCSZx0); // Frame definition
+        sei();
+        return avp::RoundRatio(F_CPU,uint32_t(*R::pUBRRx+1)<<4);
+      }
 
-    static void SetCallBacks(t_StoreFunc pS, t_GetFunc pG) {
-      StoreReceivedByte = pS;
-      GetByteToSend = pG;
-    } //  SetCallBacks
+      static void SetCallBacks(t_StoreFunc pS, t_GetFunc pG) {
+        StoreReceivedByte = pS;
+        GetByteToSend = pG;
+      } //  SetCallBacks
 
-    static void RX_vect() __attribute__((always_inline)) { // checks whether serial protocol OK
-      StatusRX |= (7<<R::UPEx) & *R::pUCSRxA;
-      if(!StoreReceivedByte(*R::pUDRx)) StatusRX |= 1<<OVERRAN;
-      // we got to read UDR, otherwise the interrupt
-      // will be called indefinitely. We do not have flow control, so we can not just disable interrupt
-      // - we will still be just loosing data
-    }
+      static void RX_vect() __attribute__((always_inline)) { // checks whether serial protocol OK
+        StatusRX |= (7<<R::UPEx) & *R::pUCSRxA;
+        if(!StoreReceivedByte(*R::pUDRx)) StatusRX |= 1<<OVERRAN;
+        // we got to read UDR, otherwise the interrupt
+        // will be called indefinitely. We do not have flow control, so we can not just disable interrupt
+        // - we will still be just loosing data
+      }
 
-    // we have top free buffer first and then pointer. Until pointer is freed we can not write any more
-    static void UDRE_vect() __attribute__((always_inline)) {
-      if(!GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx); // disable interrupt
-    }
-    
-    static bool IsTXdone() {return avp::getbit(*R::pUCSRxB,R::UDRIEx) == 0; }
+      // we have top free buffer first and then pointer. Until pointer is freed we can not write any more
+      static void UDRE_vect() __attribute__((always_inline)) {
+        if(!GetByteToSend(R::pUDRx)) avp::set_low(*R::pUCSRxB,R::UDRIEx); // disable interrupt
+      }
 
-    static void EnableTX_Interrupt() {
-      avp::set_high(*R::pUCSRxB,R::UDRIEx);
-    }
-    static inline void TryToSend() {
-      EnableTX_Interrupt();
-    }
+      static bool IsTXdone() {return avp::getbit(*R::pUCSRxB,R::UDRIEx) == 0; }
 
-    static uint8_t GetStatusRX() {
-      uint8_t temp = StatusRX;
-      StatusRX = 0;
-      return temp;
-    }
+      static void EnableTX_Interrupt() { avp::set_high(*R::pUCSRxB,R::UDRIEx); }
+      static inline void TryToSend() { EnableTX_Interrupt(); }
 
-    static bool IsOverrun() { return GetStatusRX() & (OVERRAN | DOR); }
+      static uint8_t GetStatusRX() {
+        uint8_t temp = StatusRX;
+        StatusRX = 0;
+        return temp;
+      }
 
-    IGNORE(-Wunused-but-set-variable)
-    static void FlushRX() {
-      volatile uint8_t dummy;
-      while ( *R::pUCSRxA & (1<<R::RXCx) ) dummy = *R::pUDRx;
-    }
-    STOP_IGNORING
+      static bool IsOverrun() { return GetStatusRX() & (OVERRAN | DOR); }
+
+      IGNORE(-Wunused-but-set-variable)
+      static void FlushRX() {
+        volatile uint8_t dummy;
+        while ( *R::pUCSRxA & (1<<R::RXCx) ) dummy = *R::pUDRx;
+      }
+      STOP_IGNORING
   }; //  HW_UARTx
 
 // following defines are for conveniense only, do not use elsewhere

@@ -9,6 +9,7 @@
 #define SQRWAVE_h
 
 #include <AVP_LIBS/General/General.h>
+#include <AVP_LIBS/General/Math.h>
 #include <AVP_LIBS/AVR/HW_Timer.h>
 
 // @note We can not set timer to toggle pin OCRB, only OCRA
@@ -19,7 +20,7 @@ template<class Timer> struct SqrWave: public Timer {
     CounterType CountTo; // divider = CountTo + 1
     uint8_t PrescalerInd; //! prescaler index, first active is 1
   } Params;
- public:
+public:
   static void Init() {     Timer::Power(1); Timer::InitCTC(); }
   SqrWave() { Init(); } // just to call init when initiating static object
 
@@ -59,7 +60,7 @@ template<class Timer> struct SqrWave: public Timer {
    */
   static void SetFreqByCodes(Params Codes) {
     Timer::SetPrescaler(Codes.PrescalerInd);
-    Timer::SetCountToValue(Codes.CountTo);
+    Timer::SetCountToValueA(Codes.CountTo);
   }	// SetFreqByCodes
 
   static uint32_t SetFreq(uint32_t Freq) {

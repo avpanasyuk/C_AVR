@@ -24,7 +24,7 @@ namespace avp {
   /// @tparam MOSI - AVP_PIN class
   /// @tparam MISO - AVP_PIN class
   /// @tparam Log2_Prescaler, from 1 to 7,  determines SPI frequency = F_CPU/2^Log2_Prescaler
-  template<class nSS, class CLK, class MOSI, class MISO, uint8_t Log2_Prescaler>
+  template<class nSS, class CLK, class MOSI, class MISO, uint8_t Log2_Prescaler=2>
   class tSPImaster {
   public:
     static void SetMode(uint8_t Mode) { SPCR &= ~(3<<CPHA); SPCR |= Mode<<CPHA; }
@@ -39,8 +39,8 @@ namespace avp {
       PRR0 &= ~(1<<PRSPI); // remove SPI bit from the power reduction register
       // Ok, prescaler setup is really wierd
       static constexpr uint8_t SCKbits[7] = {4,0,5,1,6,2,3};
-      SPCR = (1<<MSTR)|(1<<SPE)|(SCKbits[Log2_Prescaler-1] & 0b11); // enable hardware SPI and set as MASTER, interrupts disabled
-      SPSR = SCKbits[Log2_Prescaler-1] >> 2;
+      SPCR = (1<<MSTR)|(1<<SPE)|(SCKbits[Log2_Prescaler-1] & ((1<<SPR0)|(1<<SPR1))); // enable hardware SPI and set as MASTER, interrupts disabled
+      SPSR = (SCKbits[Log2_Prescaler-1] >> 2) & (1 << SPI2X); // setting SPI2X bit of prescaler
     } // Init
     static uint8_t TransferByte(uint8_t d = 0) {
       SPDR = d;
@@ -72,14 +72,14 @@ namespace avp {
         Master::SetFDIV(FDIV);
         Master::BitOrder(MSBfirst);
         NOP; NOP; NOP;
-        nCS_pin::set_low();
+        nCS_pin::config(OUTPUT,LOW);
       }
     } // constructor
     ~SPI_Wrapper() { if(!--Nested) nCS_pin::set_high(); }
   }; // SPI_Wrapper
 
-  template<class nCS_pin, class Master, uint8_t Mode, uint8_t FDIV, bool MSBfirst>
-  uint8_t SPI_Wrapper<nCS_pin, Master, Mode, FDIV, MSBfirst>::Nested = 0;
+  template<class Master, class nCS_pin, uint8_t Mode, uint8_t FDIV, bool MSBfirst>
+  uint8_t SPI_Wrapper<Master, nCS_pin, Mode, FDIV, MSBfirst>::Nested = 0;
 } // namespace avp
 
 #endif /* HARDSPI_H_ */
