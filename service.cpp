@@ -10,6 +10,7 @@
 #include <AVP_LIBS/General/Error.h>
 #include <AVP_LIBS/General/General.h>
 #include <AVP_LIBS/AVR/service.h>
+// #include <AVP_LIBS/AVR/Time.h>
 
 void * operator new(size_t n) {
   void * const p = malloc(n);
@@ -39,9 +40,11 @@ extern "C" {
 
   int atexit( void (*func)(void)) {return -1;}
   int __cxa_atexit() {return -1;}
-    
-    // we use watchdog for reboot and have to disable watchdog on boot
-   void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
-   void wdt_init(void) { MCUSR = 0; wdt_disable(); }
+
+  // we use watchdog for reboot and have to disable watchdog on boot
+  void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+  void wdt_init(void) { MCUSR = 0; wdt_disable(); }
 };
+
+
 

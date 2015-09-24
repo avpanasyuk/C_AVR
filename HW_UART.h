@@ -21,7 +21,8 @@
 //! addresses and bit numbers
 
 namespace avp {
-#define _TEMPLATE_DECL_  template<class UART_Regs, uint32_t baud>
+#define _TEMPLATE_DECL_  template<class UART_Regs> // can not put baud as a template parameter because
+// it is used in processor definition file
 
   _TEMPLATE_DECL_ class HW_UART: public UART_Regs {
       typedef UART_Regs R; // just to make it shorter
@@ -35,7 +36,7 @@ namespace avp {
       static volatile uint8_t StatusRX;
       enum StatusBits { OVERRAN, UPE = R::UPEx, DOR, FE };
     public:
-      static uint32_t Init() {
+      static uint32_t Init(uint32_t baud) {
         *R::pPRRx &= ~(1<<R::PRUSARTx);
         *R::pUBRRx = avp::RoundRatio(F_CPU,baud<<4)-1;
         *R::pUCSRxA &= ~(1<<R::U2Xx); // not using special 2x mode
@@ -86,7 +87,7 @@ namespace avp {
   }; //  HW_UARTx
 
 // following defines are for conveniense only, do not use elsewhere
-# define _TEMPLATE_SPEC_ HW_UART<UART_Regs,baud>
+# define _TEMPLATE_SPEC_ HW_UART<UART_Regs>
 
   _TEMPLATE_DECL_ volatile uint8_t _TEMPLATE_SPEC_::StatusRX;
   _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::t_StoreFunc _TEMPLATE_SPEC_::StoreReceivedByte;
