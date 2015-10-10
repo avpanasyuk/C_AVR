@@ -42,9 +42,14 @@ extern "C" {
   int __cxa_atexit() {return -1;}
 
   // we use watchdog for reboot and have to disable watchdog on boot
-  void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
-  void wdt_init(void) { MCUSR = 0; wdt_disable(); }
+  // void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+  // void wdt_init(void) { MCUSR = 0; wdt_disable(); }
 };
 
+static struct DoOnStartup {
+	DoOnStartup() {
+		MCUSR = 0; wdt_disable();
+	}
+} _ ;
 
 

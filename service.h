@@ -36,6 +36,6 @@ public:
 }; // ISR_Blocker
 
 static inline void hang_cpu() { cli(); volatile uint8_t stop=1; while(stop); }
-static inline void soft_reset() { wdt_enable(WDTO_15MS);  hang_cpu(); }
+static inline void soft_reset() { wdt_enable(WDTO_120MS);  hang_cpu(); } // wdt_disable() should be called immediately after restart. It is done in servuce.cpp
 
 #endif /* SERVICE_H_ */
