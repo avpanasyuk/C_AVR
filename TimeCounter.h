@@ -20,7 +20,7 @@ INIT_TIME(1)
 #define TIME_COUNTER_H_
 
 #include <AVP_LIBS/General/Math.h>
-#include "HW_Timer.h"
+#include "MCU_Defs.h"
 #include "service.h"
 
 namespace avp {

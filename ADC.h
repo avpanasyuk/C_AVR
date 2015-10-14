@@ -16,6 +16,7 @@
 #define ADC_H_
 
 #include <avr/io.h>
+#include "MCU_Defs.h"
 #include "General.h"
 #include "TimeCounter.h"
 
@@ -23,8 +24,8 @@
 namespace avp {
   namespace ADC_ { // we can not use name "ADC" because it is #defined as a name of register
     // Next two function are dealing with a sleep state, first conversion takes the same time
-    inline void PowerOn() { avp::set_low(PRR,PRADC); }
-    inline void PowerOff() { avp::set_high(PRR,PRADC); }
+    inline void PowerOn() { avp::set_low(ADC_PRR,PRADC); }
+    inline void PowerOff() { avp::set_high(ADC_PRR,PRADC); }
 
     // ********* ADMUX *************
     enum Reference { AREF, AVCC, INTERNAL1_1V /* later two need external cap on AREF pin */,  };
