@@ -3,7 +3,7 @@
  *
  * Created: 7/12/2014 1:37:44 PM
  *  Author: panasyuk
- */ 
+ */
 
 #ifdef __AVR_ATmega1284__
 #include "ATmega1284.h"

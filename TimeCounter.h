@@ -88,6 +88,7 @@ namespace avp {
 
 
   template<class TimerRegs> volatile uint32_t TimeCounter<TimerRegs>::Kibiticks = 0;
+  template<class TimerRegs> constexpr uint16_t TimeCounter<TimerRegs>::NanosecondsInTick;
 }; // namespace avp
 
 //! following defile aliases "Time" class to the specified timer. This class maintains "system"
@@ -95,14 +96,16 @@ namespace avp {
 //! Timer has to be 16-bit timer!
 #define DEFINE_TIME(TimerI) \
   typedef avp::TimeCounter<COMB3(Timer,TimerI,Regs)> Time; \
-  static inline uint32_t millis() { return Time::kibiticks(); } \
-  static inline uint32_t micros() { return Time::ticks(); }
+  extern uint32_t millis(); \
+  extern uint32_t micros();
 
 //! initiates static Time class, should be called once in CPP file
 //! @tparam TimerI - index of timer
 #define INIT_TIME(TimerI) \
   ISR(COMB3(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
-  Time __Time_Init___;
+  Time __Time_Init___; \
+  uint32_t millis() { return Time::kibiticks(); } \
+  uint32_t micros() { return Time::ticks(); }
 
 
 #endif /* TIME_COUNTER_H_ */
