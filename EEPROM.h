@@ -14,6 +14,9 @@
 #include <AVP_LIBS/General/Error.h>
 
 namespace EEPROM {
+  static inline void write_byte(uint16_t address, uint8_t value) __attribute__((optimize("O3"))); 
+  // there is cricical timing inside this function 
+  
   static inline void write_byte(uint16_t address, uint8_t value) {
     /* Wait for completion of previous write */
     debug_printf("%hu<-%hhu.",address,value);
@@ -24,7 +27,7 @@ namespace EEPROM {
     EEAR = address;
     EEDR = value;
 
-    EECR |= (1<<EEMPE);
+    EECR |= (1<<EEMPE); // there should be at most 4 clocks between these two commands!
     EECR |= (1<<EEPE);
   } // write
 
