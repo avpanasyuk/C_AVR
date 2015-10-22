@@ -19,7 +19,7 @@ namespace EEPROM {
   
   static inline void write_byte(uint16_t address, uint8_t value) {
     /* Wait for completion of previous write */
-    debug_printf("%hu<-%hhu.",address,value);
+    // debug_printf("%hu<-%hhu.",address,value);
 
     ISR_Blocker Auto;
     while(EECR & ((1<<EEPE) | (1<<EEMPE)));
@@ -39,7 +39,7 @@ namespace EEPROM {
     EEAR = address;
 
     EECR |= (1<<EERE);
-    debug_printf("%hu->%hhu.",address,EEDR);
+    // debug_printf("%hu->%hhu.",address,EEDR);
     return EEDR;
   } // read
 
