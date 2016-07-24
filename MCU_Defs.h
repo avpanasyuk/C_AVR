@@ -24,6 +24,8 @@ TIMER_DEFS(3,16,1, {0,3,6,8,10})
 UART_DEF(0,0,0)
 UART_DEF(1,1,1)
 
+#define EEPROM_SIZE 4096U
+
 #elif defined(__AVR_ATmega328P__)
 
 TIMER_DEFS(0,8,, {0,3,6,8,10})
