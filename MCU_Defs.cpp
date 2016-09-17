@@ -7,16 +7,15 @@
 
 #include "MCU_Defs.h"
 
-constexpr uint8_t Timer0Regs::Prescalers[];
-constexpr uint8_t Timer1Regs::Prescalers[];
-constexpr uint8_t Timer2Regs::Prescalers[];
+TIMER_INIT(0)
+TIMER_INIT(1)
+TIMER_INIT(2)
 
 #if defined(__AVR_ATmega1284__)
 
 UART_INIT(0,0)
 UART_INIT(1,1)
-
-constexpr uint8_t Timer3Regs::Prescalers[];
+TIMER_INIT(3)
 
 #elif defined(__AVR_ATmega328P__)
 

@@ -10,9 +10,9 @@
 #include "ATmega88A_Timers.h"
 #include "TimeCounter.h"
 
-DEFINE_TIME(1)
+DEFINE_SYSTEM_TIMER(Timer1)
 -------------- in source file ----------------
-INIT_TIME(1)
+INIT_SYSTEM_TIMER
 */
 
 
@@ -21,91 +21,108 @@ INIT_TIME(1)
 
 #include <AVP_LIBS/General/Math.h>
 #include "MCU_Defs.h"
-#include "service.h"
+// #include "service.h"
 
 namespace avp {
-  template<class TimerRegs> struct TimeCounter: public Timer16bits<TimerRegs> {
+  // @ tparam Timer -  Timer? defined in HW_Timer
+  template<class Timer>
+  struct TimeCounter: public Timer {
+    static void Setup(typename Timer::CounterType Divider = Timer::GetMaxDivider(), uint8_t PrescalerI = Timer::GetLastPrescalerI()) {
+      Timer::Power(1);
+      Timer::SetCountToValueA(Divider-1); // ticks=clocks/(1+CountToValue)
+      Timer::EnableCompareInterrupts();
+      Timer::SetCompareOutputMode(0); // do not toggle pin
+      Timer::InitCTC();
+      Timer::SetPrescalerI(PrescalerI); // start timer
+      sei();
+    } // Setup
+  }; // TimeCounter
+
+// @ tparam Timer -  either Timer8bits or Timer16bits from HW_Timer.h
+  template<class Timer>
+  struct SystemTimer: public TimeCounter<Timer> {
     /*! Ok, how do we select a prescaler? We need both micro and millisecond scales, so we need 16-bit timer/counter,
     * because if it counts faster then microseconds it we roll over before millisecond comes. So, the only consideration is that
     * it counts faster then microsecond.
+    * The idea is that we run conter with higher then 1 MHz freq, and interrupts with higher then 1 KHz, and each interrupt resets timer.
+    * This way we have access to precise submicrosec timer value, but not overload system with too frequent interrupt
     * One consideration about this class is that it has to be fast, so we can not do divisions because AVR processor does
-    * not have division and it takes forever. We use only shift instead of divisions. So we can not get micro and millisecond PRECISLEY,
-    * instead we will have "tick" which is as close as possible but smaller then microsecond and "kibitick" = 2^10*"tick".  And
-    * we have "clock" which is what we really running timer at, because prescaler setting are not every power of 2, so "tick" may be = 2^?*"clock"
+    * not have division and it takes forever. We use only shift instead of divisions. So we can not get micro and millisecond PRECISELY,
+    * instead we will have "clock" which is as close as possible but smaller then microsecond and "tick" which is as close as possible
+    * but smaller then millisecond.
+    * ALL DIVIDERS SHOULD BE POWER OF 2 to be fast in main function _tick() call, so we can use Log2 values everywhere
+    * CLOCK is the frequency counter is counting
+    * TICKS is the frequency interrupt is triggered
     */
-    typedef Timer16bits<TimerRegs> R;
-    static constexpr uint8_t Log2Divider = avp::log2(F_CPU/1000000UL);
 
-    //! Looking for a maximum prescaler which is still less then divider,  because prescaler setting are not every power of
-    //! @retval Prescaler index from Prescalers vector
-    static constexpr uint8_t FindPrescalerI(uint8_t CurI=0) {
-      return CurI == N_ELEMENTS(R::Prescalers) || R::Prescalers[CurI] > Log2Divider?
-             CurI-1:FindPrescalerI(CurI+1);
-    }
-    static constexpr uint8_t Log2Prescaler = R::Prescalers[FindPrescalerI()];
-    static constexpr uint8_t Log2ClocksInTick =  Log2Divider - Log2Prescaler;
-    /*! Ok, so our tick is a microsecond or smaller, so what is it in nanoseconds */
-    static constexpr uint16_t NanosecondsInTick = 1000000000UL/(F_CPU >> Log2Prescaler);
-    static constexpr uint16_t Log2TicksInKibitick = avp::RoundLog2Ratio(1000000UL,NanosecondsInTick); // almost always 10
-    static constexpr uint16_t MicrosecondsInKibitick = (uint32_t(NanosecondsInTick) << Log2TicksInKibitick)/1000UL;
-    static constexpr uint16_t ClocksInKibitick = 1U << (Log2ClocksInTick+Log2TicksInKibitick);
-    static volatile uint32_t Kibiticks;  // something close to a millisecond, may be up to 40% off
+    // @note clocks = BaseClock/prescaler !!!!
+    // ticks=clocks/(1+CountToValue)
+
+    static constexpr uint32_t MinTickFreq = 1000UL; // TICKS is the frequency interrupt is triggered
+    // we do not want to run interrupt with frequency too high. We want them to be faster but as close as possible to
+    // MinTickFreq
+    static constexpr uint32_t MinClockFreq = 1000000UL; // CLOCK is the frequency counter is counting
+    // we want clocks to have better resolution than 1 microsecond
+    static constexpr uint8_t PrescalerI = Timer::GetPrescalerIndex(MinClockFreq); // prescaler acts on clocks
+    static constexpr uint8_t PrescalerLog2 = Timer::GetLog2Prescaler(PrescalerI);
+    // Ok, problem is that Prescaler values are not always consequent powers of 2, there may be gaps. So Clocks may be more then
+    // twice faster then  MinClockFreq. But we still want to have interrupt Freq as close to  MinTickFreq as possible
+    // so TickDividerLog2 is not necessarily 10
+    static constexpr uint8_t TickDividerLog2 = avp::log2(BaseClock/MinTickFreq) - PrescalerLog2; // log2(clocks/ticks)
+    static constexpr uint8_t MicrosToClockTimes256 = uint8_t((1000000UL << 8)/(BaseClock >> PrescalerLog2)); // 1MHz*256/clocks
+    static constexpr uint8_t MillisToTickTimes256 = uint8_t((1000UL << (8 + TickDividerLog2))/(BaseClock >> PrescalerLog2)); // 1kHz*256/ticks
+    static volatile uint32_t Ticks; // something close to a millisecond, may be up to 50% off
 
     static void InterruptHandler() __attribute__((always_inline)) {
-      while(*R::pCounter() > ClocksInKibitick) {
-        *R::pCounter() -= ClocksInKibitick;
-        Kibiticks++;
-      }
+      Ticks++; // in Timer::SetWaveformGenerationMode(2) counter clears by itself
     } //  InterruptHandler
 
-    static void Init() {
-      R::Power(1);
-      R::SetCountToValueA(ClocksInKibitick);
-      R::EnableCompareInterrupts();
-      R::SetCompareOutputMode(0);
-      R::SetWaveformGenerationMode(0);
-      R::SetPrescaler(FindPrescalerI()+1);
-      sei();
-    } // Init
-
-    static uint32_t _ticks() {
-      return (Kibiticks << Log2TicksInKibitick) +
-             (*R::pCounter() >> Log2ClocksInTick);
+    static uint32_t _clocks() {
+      return (Ticks << TickDividerLog2) + *Timer::pCounter();
     }
-    static uint32_t ticks() { ISR_Blocker Auto; return _ticks(); }
-    static uint32_t kibiticks() { return Kibiticks; }
+    static uint32_t clocks() {
+      Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
+      auto Clocks = _clocks();
+      Timer::SetPrescalerI(PrescalerI); // restart timer
+      return Clocks;
+    } // clocks
+    static uint32_t ticks() { return Ticks; }
+    static void delayClocks(uint32_t delay) { // delay < UINT32_MAX/2
+      uint32_t Till = clocks() + delay;
+      while(clocks()-Till > UINT32_MAX/2);
+    } // delayClocks
     static void delayTicks(uint32_t delay) { // delay < UINT32_MAX/2
       uint32_t Till = ticks() + delay;
       while(ticks()-Till > UINT32_MAX/2);
-    } // delayTicks
-    static void delayKibiticks(uint32_t delay) { // delay < UINT32_MAX/2
-      uint32_t Till = kibiticks() + delay;
-      while(kibiticks()-Till > UINT32_MAX/2);
-    } // delayTicks
+    } // delayClocks
 
-    TimeCounter() { Init(); }	// this constructor only to call Init() automatically
-  }; // TimeCounter
+    static void Init() { TimeCounter<Timer>::Setup(1U << TickDividerLog2, PrescalerI); }
 
-
-  template<class TimerRegs> volatile uint32_t TimeCounter<TimerRegs>::Kibiticks = 0;
-  template<class TimerRegs> constexpr uint16_t TimeCounter<TimerRegs>::NanosecondsInTick;
+    SystemTimer() { Init(); } // so Init can be called outside of function before main
+  }; // SystemTimer
 }; // namespace avp
+
+template<class Timer> volatile uint32_t SystemTimer<Timer>::Ticks;
+
+//! should be called in cpp file for each timer
+#define INIT_TIMER_ISR(Timer) \
+  ISR(COMB3(TIMER,TimerI,_COMPA_vect)) { Timer::InterruptHandler(); } \
+
 
 //! following defile aliases "Time" class to the specified timer. This class maintains "system"
 //! clock. "standard" functions millis() and micros() are defined as well, returning corresponding time marks
-//! Timer has to be 16-bit timer!
-#define DEFINE_TIME(TimerI) \
-  typedef avp::TimeCounter<COMB3(Timer,TimerI,Regs)> Time; \
+//! @tparam Timer is Timer? defined in HW_Timer.h
+#define DEFINE_SYSTEM_TIMER(Timer) \
+  typedef avp::SystemTimer<Timer> Time; \
   extern uint32_t millis(); \
   extern uint32_t micros();
 
 //! initiates static Time class, should be called once in CPP file
 //! @tparam TimerI - index of timer
-#define INIT_TIME(TimerI) \
-  ISR(COMB3(TIMER,TimerI,_COMPA_vect)) { Time::InterruptHandler(); } \
-  Time __Time_Init___; \
-  uint32_t millis() { return Time::kibiticks(); } \
-  uint32_t micros() { return Time::ticks(); }
+#define INIT_SYSTEM_TIMER \
+  Time __Time_Init__; \
+  uint32_t millis() { return (Time::ticks()*Time::MillisToTickTimes256) >> 8; } \
+  uint32_t micros() { return (Time::clocks()*Time::MicrosToClockTimes256) >> 8; }
 
 
 #endif /* TIME_COUNTER_H_ */
