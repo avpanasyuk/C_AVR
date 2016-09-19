@@ -108,6 +108,9 @@ namespace avp {
       uint32_t Till = ticks() + delay;
       while(ticks()-Till > UINT32_MAX/2);
     } // delayClocks
+    //! divide operation user here takes a lot of CPU cycles, so it is better to use them as constexpr
+    static constexpr uint32_t MillisToTicks(uint32_t ms) { return (ms << 8)/MillisToTickTimes256; }
+    static constexpr uint32_t MicrosToClocks(uint32_t us) { return (us << 8)/MicrosToClockTimes256; }
 
     static void Init() { TimeCounter<Timer>::Setup(InterruptHandler, 1U << TickDividerLog2, PrescalerI); }
 

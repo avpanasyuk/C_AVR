@@ -25,7 +25,7 @@ namespace avp {
     SqrWave() { Init(); } // just to call init when initiating static object
 
     static uint32_t GetFreq(Params Codes) {
-      return avp::RoundRatio<uint32_t>(BaseClock >> (Timer::Prescalers[Codes.PrescalerInd-1]+1),
+      return avp::RoundRatio<uint32_t>(F_CPU >> (Timer::Prescalers[Codes.PrescalerInd-1]+1),
                                        Codes.CountTo+1);
     } // GetFreq
 
@@ -37,7 +37,7 @@ namespace avp {
      */
     static Params GetCodes(uint32_t *pFreq) {
       Params Out = {0,0};
-      uint32_t Divider = avp::RoundRatio<uint32_t>(BaseClock, *pFreq);
+      uint32_t Divider = avp::RoundRatio<uint32_t>(F_CPU/2, *pFreq);
       uint16_t MinPrescaler = Divider >> Timer::Width; // prescaler should be large enough so
       // the rest of the divider fits into Counter
       while(MinPrescaler >> Timer::Prescalers[Out.PrescalerInd++]) {

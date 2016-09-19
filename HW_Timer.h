@@ -1,5 +1,8 @@
-/*
- * HW_Timer.h
+/*!
+ * @file HW_Timer.h
+ * @detail this file provides classes for description of MCU hardware timers which should be used in MCU_Defs.[hc] files
+ * to give access to timers. See #defines TIMER_DEFS and TIMER_INIT at the bottom which should be put in MCU_Defs
+ * files
  *
  * Created: 7/3/2014 7:29:32 PM
  *  Author: panasyuk
@@ -16,9 +19,9 @@
 #include "General.h"
 
 namespace avp {
-  static constexpr uint32_t BaseClock = F_CPU/2;
+  static constexpr uint32_t BaseClock = F_CPU/2; //!< the fastest we can clock timer is half of F_CPU
 //! class for functions which work identical for 8 bit and 16 bit timers. OBJECTS SHOULD NOT BE CREATED:
-//! USE ascendants Timer8buts or Timer16bits
+//! USE ascendants Timer?
 //! @tparam TimerRegs - class created by using TIMER_DEFS #define in the MCU_Defs class.
 //!       it looks like Timer0Regs, Timer1Regs etc
   template<class TimerRegs> struct HW_Timer: public TimerRegs {
