@@ -23,6 +23,7 @@ namespace avp {
 //!       it looks like Timer0Regs, Timer1Regs etc
   template<class TimerRegs> struct HW_Timer: public TimerRegs {
     typedef typename TimerRegs::CounterType CounterType;
+    static void (*pInterruptCallback)();
     static constexpr volatile CounterType *pCounter() { return TimerRegs::pTCNTx; }
     static void Power(bool State) { avp::setbit(*TimerRegs::pPRRx,TimerRegs::PRTIMx,!State); }
     static void SetCountToValueA(CounterType Value) { *TimerRegs::pOCRxA = Value; }
@@ -66,14 +67,12 @@ namespace avp {
     //! @return PrescalerI of maximim prescaler which still produces frequency higher than Freq, or minimum PrescalerI
     static constexpr int8_t GetPrescalerIndex(uint32_t Freq, int8_t CurPrescalerI = 1) {
       return GetFreq(CurPrescalerI) <= Freq?CurPrescalerI:GetPrescalerIndex(Freq,CurPrescalerI+1);
-    }
-    static void InterruptHandler();
+    } // GetPrescalerIndex
+
+    static inline void InterruptHandler() { if(pInterruptCallback != nullptr) (*pInterruptCallback)(); }
   }; // Timer
 
-  template<class TimerRegs>
-  __weak void HW_Timer<TimerRegs>::InterruptHandler() {
-    hang_cpu();
-  };
+  template<class TimerRegs> void (*HW_Timer<TimerRegs>::pInterruptCallback)() = nullptr;
 
   template<class TimerRegs> struct Timer8bits:public HW_Timer<TimerRegs> {
     typedef HW_Timer<TimerRegs> R;

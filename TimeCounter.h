@@ -31,7 +31,9 @@ namespace avp {
     //! Frequency of interrupt calling = BaseClock/Timer::GetPrescaler(PrescalerI)/Divider.
     //! @param PrescalerI -  index in Timer::Prescalers[PrescalerI - 1]. If PrescalerI == 0 timer stops
     //! @param Divider -  clock divider, should not be 0
-    static void Setup(typename Timer::CounterType Divider = Timer::GetMaxDivider(), uint8_t PrescalerI = Timer::GetLastPrescalerI()) {
+    static void Setup(void (*pInterruptCallback)() = nullptr, typename Timer::CounterType Divider = Timer::GetMaxDivider(),
+                      uint8_t PrescalerI = Timer::GetLastPrescalerI()) {
+      Timer::pInterruptCallback = pInterruptCallback;
       Timer::Power(1);
       Timer::SetCountToValueA(Divider-1); // ticks=clocks/(1+CountToValue)
       Timer::EnableCompareInterrupts();
@@ -40,7 +42,16 @@ namespace avp {
       Timer::SetPrescalerI(PrescalerI); // start timer
       sei();
     } // Setup
+
+    //! the class is used mostly as a static class, this constructor just so we can call Setup
+    //! function when static variables are initialized and not from a function
+    //! @see Setup for parameter description
+    TimeCounter(void (*pInterruptCallback)() = nullptr, typename Timer::CounterType Divider = Timer::GetMaxDivider(),
+                uint8_t PrescalerI = Timer::GetLastPrescalerI()) {
+      Setup(pInterruptCallback, Divider, PrescalerI);
+    } // constructor
   }; // TimeCounter
+
 
 // @ tparam Timer -  either Timer8bits or Timer16bits from HW_Timer.h
   template<class Timer>
@@ -77,9 +88,7 @@ namespace avp {
     static constexpr uint8_t MillisToTickTimes256 = uint8_t((1000UL << (8 + TickDividerLog2))/(BaseClock >> PrescalerLog2)); // 1kHz*256/ticks
     static volatile uint32_t Ticks; // something close to a millisecond, may be up to 50% off
 
-    static void InterruptHandler() {
-      Ticks++; // in Timer::SetWaveformGenerationMode(2) counter clears by itself
-    } //  InterruptHandler
+    static void InterruptHandler();
 
     static uint32_t _clocks() {
       return (Ticks << TickDividerLog2) + *Timer::pCounter();
@@ -100,13 +109,14 @@ namespace avp {
       while(ticks()-Till > UINT32_MAX/2);
     } // delayClocks
 
-    static void Init() { TimeCounter<Timer>::Setup(1U << TickDividerLog2, PrescalerI); }
+    static void Init() { TimeCounter<Timer>::Setup(InterruptHandler, 1U << TickDividerLog2, PrescalerI); }
 
     SystemTimer() { Init(); } // so Init can be called outside of function before main
   }; // SystemTimer
 }; // namespace avp
 
 template<class Timer> volatile uint32_t SystemTimer<Timer>::Ticks;
+template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Ticks++; }
 
 //! should be called in cpp file for each timer
 #define INIT_TIMER_ISR(Timer) \
