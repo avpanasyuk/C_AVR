@@ -12,11 +12,13 @@
 #include <avr/io.h>
 #include <AVP_LIBS/General/BitBang.h>
 #include <AVP_LIBS/General/Macros.h>
+#include <AVP_LIBS/General/Error.h>
 #include "General.h"
 
 namespace avp {
   static constexpr uint32_t BaseClock = F_CPU/2;
-//! @brief class for functions which work identical for 8 bit and 16 bit timers
+//! class for functions which work identical for 8 bit and 16 bit timers. OBJECTS SHOULD NOT BE CREATED:
+//! USE ascendants Timer8buts or Timer16bits
 //! @tparam TimerRegs - class created by using TIMER_DEFS #define in the MCU_Defs class.
 //!       it looks like Timer0Regs, Timer1Regs etc
   template<class TimerRegs> struct HW_Timer: public TimerRegs {
@@ -65,11 +67,13 @@ namespace avp {
     static constexpr int8_t GetPrescalerIndex(uint32_t Freq, int8_t CurPrescalerI = 1) {
       return GetFreq(CurPrescalerI) <= Freq?CurPrescalerI:GetPrescalerIndex(Freq,CurPrescalerI+1);
     }
-    __weak static void InterruptHandler();
+    static void InterruptHandler();
   }; // Timer
 
   template<class TimerRegs>
-  __weak void HW_Timer<TimerRegs>::InterruptHandler() {};
+  __weak void HW_Timer<TimerRegs>::InterruptHandler() {
+    hang_cpu();
+  };
 
   template<class TimerRegs> struct Timer8bits:public HW_Timer<TimerRegs> {
     typedef HW_Timer<TimerRegs> R;
@@ -101,7 +105,7 @@ namespace avp {
   }; // Timer16bits
 }
 
-//! this timer definition should be used in processor specific header files only, where they define all timers for this processor
+//! this timer definition should be used in MCU_Defs.h, where they define all timers for this processor
 //! it defines Timer0, Timer1. etc static "Timer?bits" classes
 #define TIMER_DEFS(I,nbits,PRRi,...) \
 using namespace avp; \
@@ -126,9 +130,9 @@ struct COMB3(Timer,I,Regs) { \
   BIT_NUM_DEF(OCIE,I,A) \
   static constexpr uint8_t Prescalers[] = __VA_ARGS__; \
 }; \
-typedef COMB3(Timer,nbits,bits)<COMB3(Timer,I,Regs)> COMB2(Timer,I); // defines Timer0. Timer1 ....etc
+typedef COMB3(Timer,nbits,bits)<COMB3(Timer,I,Regs)> COMB2(Timer,I); // defines Timer? as Timer?bits<Timer?Regs>
 
-//! this macro should be called in .cpp file
+//! this macro should be called in MCU_Defs.cpp file where they sets interrupt handler
 #define TIMER_INIT(I) \
     ISR(COMB3(TIMER,I,_COMPA_vect)) { COMB2(Timer,I)::InterruptHandler(); } \
     constexpr uint8_t COMB3(Timer,I,Regs)::Prescalers[];

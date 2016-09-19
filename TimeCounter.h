@@ -5,12 +5,12 @@
 *  Author: panasyuk
 * function dealing with time
 * including file should include a header file with HW Timer classes first
-* so, use ia like this:
+* so, use it like this:
 -------------- in header file ---------------
 #include "ATmega88A_Timers.h"
 #include "TimeCounter.h"
 
-DEFINE_SYSTEM_TIMER(Timer1)
+DEFINE_SYSTEM_TIMER(Timer?)
 -------------- in source file ----------------
 INIT_SYSTEM_TIMER
 */
@@ -19,19 +19,23 @@ INIT_SYSTEM_TIMER
 #ifndef TIME_COUNTER_H_
 #define TIME_COUNTER_H_
 
-#include <AVP_LIBS/General/Math.h>
+// #include <AVP_LIBS/General/Math.h>
 #include "MCU_Defs.h"
 // #include "service.h"
 
 namespace avp {
-  // @ tparam Timer -  Timer? defined in HW_Timer
+  //! @tparam Timer -  Timer? defined in HW_Timer
   template<class Timer>
   struct TimeCounter: public Timer {
+    //! setting up and starting timer, by default - in slowest configuration.
+    //! Frequency of interrupt calling = BaseClock/Timer::GetPrescaler(PrescalerI)/Divider.
+    //! @param PrescalerI -  index in Timer::Prescalers[PrescalerI - 1]. If PrescalerI == 0 timer stops
+    //! @param Divider -  clock divider, should not be 0
     static void Setup(typename Timer::CounterType Divider = Timer::GetMaxDivider(), uint8_t PrescalerI = Timer::GetLastPrescalerI()) {
       Timer::Power(1);
       Timer::SetCountToValueA(Divider-1); // ticks=clocks/(1+CountToValue)
       Timer::EnableCompareInterrupts();
-      Timer::SetCompareOutputMode(0); // do not toggle pin
+      Timer::SetCompareOutputMode(0); // do not toggle output pin
       Timer::InitCTC();
       Timer::SetPrescalerI(PrescalerI); // start timer
       sei();
@@ -44,7 +48,7 @@ namespace avp {
     /*! Ok, how do we select a prescaler? We need both micro and millisecond scales, so we need 16-bit timer/counter,
     * because if it counts faster then microseconds it we roll over before millisecond comes. So, the only consideration is that
     * it counts faster then microsecond.
-    * The idea is that we run conter with higher then 1 MHz freq, and interrupts with higher then 1 KHz, and each interrupt resets timer.
+    * The idea is that we run counter with higher then 1 MHz freq, and interrupts with higher then 1 KHz, and each interrupt resets timer.
     * This way we have access to precise submicrosec timer value, but not overload system with too frequent interrupt
     * One consideration about this class is that it has to be fast, so we can not do divisions because AVR processor does
     * not have division and it takes forever. We use only shift instead of divisions. So we can not get micro and millisecond PRECISELY,
@@ -73,7 +77,7 @@ namespace avp {
     static constexpr uint8_t MillisToTickTimes256 = uint8_t((1000UL << (8 + TickDividerLog2))/(BaseClock >> PrescalerLog2)); // 1kHz*256/ticks
     static volatile uint32_t Ticks; // something close to a millisecond, may be up to 50% off
 
-    static void InterruptHandler() __attribute__((always_inline)) {
+    static void InterruptHandler() {
       Ticks++; // in Timer::SetWaveformGenerationMode(2) counter clears by itself
     } //  InterruptHandler
 
