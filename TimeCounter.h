@@ -111,6 +111,12 @@ namespace avp {
     //! divide operation user here takes a lot of CPU cycles, so it is better to use them as constexpr
     static constexpr uint32_t MillisToTicks(uint32_t ms) { return (ms << 8)/MillisToTickTimes256; }
     static constexpr uint32_t MicrosToClocks(uint32_t us) { return (us << 8)/MicrosToClockTimes256; }
+    static inline void delayMicros(uint32_t delay) { // delay < UINT32_MAX/2
+      delayClocks((delay*BaseClock) >> (PrescalerLog2 + 20));
+    } // delayClocks
+    static inline void delayMillis(uint32_t delay) { // delay < UINT32_MAX/2
+      delayTicks((delay*BaseClock) >> (PrescalerLog2 + TickDividerLog2 + 10));
+    } // delayClocks
 
     static void Init() { TimeCounter<Timer>::Setup(InterruptHandler, 1U << TickDividerLog2, PrescalerI); }
 
