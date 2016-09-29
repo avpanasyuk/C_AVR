@@ -36,10 +36,10 @@ namespace avp {
       Timer::pInterruptCallback = pInterruptCallback;
       Timer::Power(1);
       Timer::SetCountToValueA(Divider-1); // ticks=clocks/(1+CountToValue)
-      Timer::EnableCompareInterrupts();
       Timer::SetCompareOutputMode(0); // do not toggle output pin
       Timer::InitCTC();
       Timer::SetPrescalerI(PrescalerI); // start timer
+      Timer::EnableCompareInterrupts();
       sei();
     } // Setup
 
@@ -80,17 +80,17 @@ namespace avp {
     // we want clocks to have better resolution than 1 microsecond
     static constexpr uint8_t PrescalerI = Timer::GetPrescalerIndex(MinClockFreq); // prescaler acts on clocks
     static constexpr uint8_t PrescalerLog2 = Timer::GetLog2Prescaler(PrescalerI);
-    // Ok, problem is that Prescaler values are not always consequent powers of 2, there may be gaps. So Clocks may be more then
+    // Ok, the problem is that Prescaler values are not always consequent powers of 2, there may be gaps. So Clocks may be more then
     // twice faster then  MinClockFreq. But we still want to have interrupt Freq as close to  MinTickFreq as possible
     // so TickDividerLog2 is not necessarily 10
     static constexpr uint8_t TickDividerLog2 = avp::log2(BaseClock/MinTickFreq) - PrescalerLog2; // log2(clocks/ticks)
     static constexpr uint8_t MicrosToClockTimes256 = uint8_t((1000000UL << 8)/(BaseClock >> PrescalerLog2)); // 1MHz*256/clocks
     static constexpr uint8_t MillisToTickTimes256 = uint8_t((1000UL << (8 + TickDividerLog2))/(BaseClock >> PrescalerLog2)); // 1kHz*256/ticks
-    static volatile uint32_t Ticks; // something close to a millisecond, may be up to 50% off
+    static volatile uint32_t Ticks; // something close to a millisecond, but may be much smaller if proper prescaler is missing
 
     static void InterruptHandler();
 
-    static uint32_t _clocks() {
+    static inline uint32_t _clocks() {
       return (Ticks << TickDividerLog2) + *Timer::pCounter();
     }
     static uint32_t clocks() {
@@ -111,11 +111,13 @@ namespace avp {
     //! divide operation user here takes a lot of CPU cycles, so it is better to use them as constexpr
     static constexpr uint32_t MillisToTicks(uint32_t ms) { return (ms << 8)/MillisToTickTimes256; }
     static constexpr uint32_t MicrosToClocks(uint32_t us) { return (us << 8)/MicrosToClockTimes256; }
-    static inline void delayMicros(uint32_t delay) { // delay < UINT32_MAX/2
-      delayClocks((delay*BaseClock) >> (PrescalerLog2 + 20));
+    //! @param delay - us
+    static inline void delayMicros(uint16_t delay) {
+      delayClocks((delay*(BaseClock >> 10)) >> (PrescalerLog2 + 10));
     } // delayClocks
-    static inline void delayMillis(uint32_t delay) { // delay < UINT32_MAX/2
-      delayTicks((delay*BaseClock) >> (PrescalerLog2 + TickDividerLog2 + 10));
+    //! @param delay - ms
+    static inline void delayMillis(uint16_t delay) {
+      delayTicks((delay*(BaseClock >> 10)) >> (PrescalerLog2 + TickDividerLog2));
     } // delayClocks
 
     static void Init() { TimeCounter<Timer>::Setup(InterruptHandler, 1U << TickDividerLog2, PrescalerI); }
@@ -125,6 +127,7 @@ namespace avp {
 }; // namespace avp
 
 template<class Timer> volatile uint32_t SystemTimer<Timer>::Ticks;
+//! timer is set to reset *Timer::pCounter() to 0 when it happens
 template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Ticks++; }
 
 //! should be called in cpp file for each timer

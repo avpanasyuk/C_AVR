@@ -21,7 +21,7 @@
 namespace avp {
   static constexpr uint32_t BaseClock = F_CPU/2; //!< the fastest we can clock timer is half of F_CPU
 //! class for functions which work identical for 8 bit and 16 bit timers. OBJECTS SHOULD NOT BE CREATED:
-//! USE ascendants Timer?
+//! USE subclasses Timer?
 //! @tparam TimerRegs - class created by using TIMER_DEFS #define in the MCU_Defs class.
 //!       it looks like Timer0Regs, Timer1Regs etc
   template<class TimerRegs> struct HW_Timer: public TimerRegs {
