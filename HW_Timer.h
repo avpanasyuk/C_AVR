@@ -37,6 +37,7 @@ namespace avp {
     //! @param B is 2 bits of TCCRxB register - COMxB1, COMxB0
     static void SetCompareOutputMode(uint8_t A, uint8_t B=0) {
       avp::setbits(*TimerRegs::pTCCRxA, TimerRegs::COMxB0, 4, (A<<2) | B);
+
     }
     //! @param PrescalerI is just a value from CSxx table, 0 stops clock. Use GetPrescaler() to get value
     static void SetPrescalerI(uint8_t PrescalerI) {
@@ -66,10 +67,10 @@ namespace avp {
 
     //! Get biggest prescaler index at which Frequency is still higher then Freq
     //! @param Freq - minimum freq
-    //! @param CurPrescalerI - starting index in looking for PrescaledI, default is minimun PrescalerI
+    //! @param CurPrescalerI - starting index in looking for PrescaledI, default is minimum PrescalerI
     //! @return PrescalerI of maximim prescaler which still produces frequency higher than Freq, or minimum PrescalerI
-    static constexpr int8_t GetPrescalerIndex(uint32_t Freq, int8_t CurPrescalerI = 1) {
-      return GetFreq(CurPrescalerI) <= Freq?CurPrescalerI:GetPrescalerIndex(Freq,CurPrescalerI+1);
+    static constexpr int8_t GetPrescalerIndex(uint32_t Clock, int8_t CurPrescalerI = 1) {
+      return GetClock(CurPrescalerI) < Clock?CurPrescalerI-1:GetPrescalerIndex(Clock,CurPrescalerI+1);
     } // GetPrescalerIndex
 
     static inline void InterruptHandler() { if(pInterruptCallback != nullptr) (*pInterruptCallback)(); }

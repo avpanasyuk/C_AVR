@@ -74,67 +74,58 @@ namespace avp {
     // @note clocks = BaseClock/prescaler !!!!
     // ticks=clocks/(1+CountToValue)
 
-    static volatile uint32_t Ticks; // interrupt counter
-
-
-  public:
-    static constexpr uint32_t MinClockFreq = 1000000UL; // CLOCK is the frequency counter is counting
+    static volatile uint32_t Rollovers; // interrupt counter. Interrupt is triggered when counter rolls over
+    static constexpr uint32_t MinClock = 1000000UL; // CLOCK is the frequency counter is counting
     // we want clocks to have better resolution than 1 microsecond
-    static constexpr uint8_t PrescalerI = Timer::GetPrescalerIndex(MinClockFreq); // prescaler acts on clocks
+    static constexpr uint8_t PrescalerI = Timer::GetPrescalerIndex(MinClock); // prescaler acts on clocks
     static constexpr uint8_t PrescalerLog2 = Timer::GetLog2Prescaler(PrescalerI);
     // Ok, the problem is that Prescaler values are not always consequent powers of 2, there may be gaps. So Clocks may be more then
-    // twice faster then  MinClockFreq.
-    // TICKS is the frequency interrupt is triggered. Which is every timer 16 bit counter rolls over
-    static constexpr uint8_t ClocksInTickLog2 = 16; // log2(clocks/ticks).
+    // twice faster then  MinClock.
+  public:
     // we are trying to avoid division operation in millis and micros. So instead of division we do shift and multiplication
     // micros = clocks*x>>16;
-    static constexpr uint16_t MicrosToClockShift16 = uint16_t((1000000UL << 12)/(BaseClock >> (PrescalerLog2+4))); // 1MHz*65536/clocks
-    static constexpr uint16_t MillisToClockShift16 = uint16_t((1000UL << 16)/(BaseClock >> PrescalerLog2)); // 1kHz*65536/clocks
-    static constexpr uint16_t ClocksInMillis = (BaseClock >> PrescalerLog2)/1000U;
+    static constexpr uint16_t MicrosInClockShift16 = uint16_t((1000000UL << 12)/(BaseClock >> (PrescalerLog2+4))); // 1MHz*65536/clocks
+    static constexpr uint16_t ClocksInMillis = uint16_t((BaseClock >> PrescalerLog2)/1000U);
 
     static void InterruptHandler();
 
-
-    static uint64_t _clocks() {
+    static volatile uint64_t clocks48bits() {
       Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
-      uint64_t Clocks = (uint64_t(Ticks) << ClocksInTickLog2) + *Timer::pCounter();
+      uint64_t Clocks = (uint64_t(Rollovers) << Timer::Width) + *Timer::pCounter();
       Timer::SetPrescalerI(PrescalerI); // restart timer
       return Clocks;
     } // _clocks
-    static uint32_t clocks() {
+    static volatile uint32_t clocks() {
       Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
-      auto Clocks = (Ticks << ClocksInTickLog2) + *Timer::pCounter();
+      auto Clocks = (Rollovers << Timer::Width) + *Timer::pCounter();
       Timer::SetPrescalerI(PrescalerI); // restart timer
       return Clocks;
     } // clocks
-    static uint32_t ticks() { return Ticks; }
     static void delayClocks(uint32_t delay) { // delay < UINT32_MAX/2
       uint32_t Till = clocks() + delay;
       while(clocks()-Till > UINT32_MAX/2);
     } // delayClocks
-    static void delayTicks(uint32_t delay) { // delay < UINT32_MAX/2
-      uint32_t Till = ticks() + delay;
-      while(ticks()-Till > UINT32_MAX/2);
-    } // delayClocks
     //! @param delay - us
     static inline void delayMicros(uint16_t delay) {
-      delayClocks(delay*(BaseClock >> PrescalerLog2)/1000000UL);
+      delayClocks(delay*((BaseClock >> PrescalerLog2)/1000U)/1000U);
     } // delayClocks
     //! @param delay - ms
     static inline void delayMillis(uint16_t delay) {
-      delayTicks(uint32_t(delay)*ClocksInMillis);
+      delayClocks(uint32_t(delay)*ClocksInMillis);
     } // delayClocks
 
-    static void Init() { TimeCounter<Timer>::Setup(InterruptHandler, 0, PrescalerI); }
+    static void Init() {
+      TimeCounter<Timer>::Setup(InterruptHandler, 0, PrescalerI);
+      AVP_PIN(D,6)::mode(true);
+    }
 
     SystemTimer() { Init(); } // so Init can be called outside of function before main
   }; // SystemTimer
 }; // namespace avp
 
-// template<class Timer> constexpr uint16_t SystemTimer<Timer>::ClocksInMillis = (1000UL << 8)/MicrosToClockShift16;
-template<class Timer> volatile uint32_t SystemTimer<Timer>::Ticks;
+template<class Timer> volatile uint32_t SystemTimer<Timer>::Rollovers;
 //! timer is set to reset *Timer::pCounter() to 0 when it happens
-template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Ticks++; }
+template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers++; AVP_PIN(D,6)::toggle(); }
 
 //! should be called in cpp file for each timer
 #define INIT_TIMER_ISR(Timer) \
@@ -153,8 +144,8 @@ template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Ticks++; }
 //! @tparam TimerI - index of timer
 #define INIT_SYSTEM_TIMER \
   Time __Time_Init__; \
-  uint32_t millis() { return (Time::_clocks()*Time::MillisToClockShift16) >> 16;} \
-  uint32_t micros() { return (Time::_clocks()*Time::MicrosToClockShift16) >> 16; }
+  uint32_t millis() { return (Time::clocks48bits()*((uint32_t(Time::MicrosInClockShift16)<<10)/1000)) >> 26; } \
+  uint32_t micros() { return (Time::clocks48bits()*Time::MicrosInClockShift16) >> 16; }
 
 
 #endif /* TIME_COUNTER_H_ */
