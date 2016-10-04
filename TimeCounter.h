@@ -75,6 +75,7 @@ namespace avp {
     // ticks=clocks/(1+CountToValue)
 
     static volatile uint32_t Rollovers; // interrupt counter. Interrupt is triggered when counter rolls over
+    static constexpr uint8_t Shift = 3;
     static constexpr uint32_t MinClock = 1000000UL; // CLOCK is the frequency counter is counting
     // we want clocks to have better resolution than 1 microsecond
     static constexpr uint8_t PrescalerI = Timer::GetPrescalerIndex(MinClock); // prescaler acts on clocks
@@ -91,13 +92,13 @@ namespace avp {
 
     static volatile uint64_t clocks48bits() {
       Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
-      uint64_t Clocks = (uint64_t(Rollovers) << Timer::Width) + *Timer::pCounter();
+      uint64_t Clocks = (uint64_t(Rollovers) << (Timer::Width - Shift)) + *Timer::pCounter();
       Timer::SetPrescalerI(PrescalerI); // restart timer
       return Clocks;
     } // _clocks
     static volatile uint32_t clocks() {
       Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
-      auto Clocks = (Rollovers << Timer::Width) + *Timer::pCounter();
+      auto Clocks = (Rollovers << (Timer::Width - Shift)) + *Timer::pCounter();
       Timer::SetPrescalerI(PrescalerI); // restart timer
       return Clocks;
     } // clocks
@@ -118,14 +119,21 @@ namespace avp {
       TimeCounter<Timer>::Setup(InterruptHandler, 0, PrescalerI);
       // AVP_PIN(D,6)::mode(true);
     }
-
+    static void Reset() {
+      Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
+      while(*Timer::pCounter() >> (Timer::Width - Shift)) {
+        *Timer::pCounter() -= 1UL << (Timer::Width - Shift);
+        Rollovers++;
+      }
+      Timer::SetPrescalerI(PrescalerI); // restart timer
+    }
     SystemTimer() { Init(); } // so Init can be called outside of function before main
   }; // SystemTimer
 }; // namespace avp
 
 template<class Timer> volatile uint32_t SystemTimer<Timer>::Rollovers;
 //! timer is set to reset *Timer::pCounter() to 0 when it happens
-template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers++; } // AVP_PIN(D,6)::toggle(); }
+template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers += 1UL << Shift; } // AVP_PIN(D,6)::toggle(); }
 
 //! should be called in cpp file for each timer
 #define INIT_TIMER_ISR(Timer) \
