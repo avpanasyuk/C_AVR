@@ -19,7 +19,7 @@
 #include "General.h"
 
 namespace avp {
-  static constexpr uint32_t BaseClock = F_CPU/2; //!< the fastest we can clock timer is half of F_CPU
+  static constexpr uint32_t BaseClock = F_CPU; //!< the fastest we can clock timer is half of F_CPU
 //! class for functions which work identical for 8 bit and 16 bit timers. OBJECTS SHOULD NOT BE CREATED:
 //! USE subclasses Timer?
 //! @tparam TimerRegs - class created by using TIMER_DEFS #define in the MCU_Defs class.
@@ -39,7 +39,7 @@ namespace avp {
       avp::setbits(*TimerRegs::pTCCRxA, TimerRegs::COMxB0, 4, (A<<2) | B);
 
     }
-    //! @param PrescalerI is just a value from CSxx table, 0 stops clock. Use GetPrescaler() to get value
+    //! @param PrescalerI is just an index from CSxx table, 0 stops clock. Use GetPrescaler() to get value
     static void SetPrescalerI(uint8_t PrescalerI) {
       avp::setbits(*TimerRegs::pTCCRxB,TimerRegs::CSx0,3,PrescalerI);
     }

@@ -20,6 +20,7 @@ INIT_SYSTEM_TIMER
 #define TIME_COUNTER_H_
 
 // #include <AVP_LIBS/General/Math.h>
+// #include <AVP_LIBS/AVR/GIOpins.h>
 #include "MCU_Defs.h"
 // #include "service.h"
 
@@ -90,15 +91,15 @@ namespace avp {
     static void InterruptHandler();
 
     static volatile uint64_t clocks48bits() {
-      Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
+//      Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
       uint64_t Clocks = (uint64_t(Rollovers) << Timer::Width) + *Timer::pCounter();
-      Timer::SetPrescalerI(PrescalerI); // restart timer
+//      Timer::SetPrescalerI(PrescalerI); // restart timer
       return Clocks;
     } // _clocks
     static volatile uint32_t clocks() {
-      Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
+//     Timer::SetPrescalerI(0); // stop timer to avoid interrupts or missed interrupts
       auto Clocks = (Rollovers << Timer::Width) + *Timer::pCounter();
-      Timer::SetPrescalerI(PrescalerI); // restart timer
+//      Timer::SetPrescalerI(PrescalerI); // restart timer
       return Clocks;
     } // clocks
     static void delayClocks(uint32_t delay) { // delay < UINT32_MAX/2
@@ -125,7 +126,7 @@ namespace avp {
 
 template<class Timer> volatile uint32_t SystemTimer<Timer>::Rollovers;
 //! timer is set to reset *Timer::pCounter() to 0 when it happens
-template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers++; } // AVP_PIN(D,6)::toggle(); }
+template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers++; /* AVP_PIN(D,6)::toggle(); */ }
 
 //! should be called in cpp file for each timer
 #define INIT_TIMER_ISR(Timer) \
