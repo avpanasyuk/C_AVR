@@ -116,7 +116,7 @@ namespace avp {
 
     static void Init() {
       TimeCounter<Timer>::Setup(InterruptHandler, 0, PrescalerI);
-      AVP_PIN(D,6)::mode(true);
+      // AVP_PIN(D,6)::mode(true);
     }
 
     SystemTimer() { Init(); } // so Init can be called outside of function before main
@@ -125,7 +125,7 @@ namespace avp {
 
 template<class Timer> volatile uint32_t SystemTimer<Timer>::Rollovers;
 //! timer is set to reset *Timer::pCounter() to 0 when it happens
-template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers++; AVP_PIN(D,6)::toggle(); }
+template<class Timer> void SystemTimer<Timer>::InterruptHandler() { Rollovers++; } // AVP_PIN(D,6)::toggle(); }
 
 //! should be called in cpp file for each timer
 #define INIT_TIMER_ISR(Timer) \
