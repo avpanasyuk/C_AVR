@@ -14,7 +14,7 @@
 
 void * operator new(size_t n) {
   void * const p = malloc(n);
-  if(p == NULL) avp::major_fail(1);
+  if(p == NULL) major_fail(1);
   return p;
 }
 
