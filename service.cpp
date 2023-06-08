@@ -47,9 +47,13 @@ extern "C" {
 };
 
 static struct DoOnStartup {
-	DoOnStartup() {
-		MCUSR = 0; wdt_disable();
-	}
+  DoOnStartup() {
+    MCUSR = 0; wdt_disable();
+  }
 } _ ;
+
+void avp::hang_cpu() { cli(); volatile uint8_t stop=1; while(stop); }
+void avp::soft_reset() { wdt_enable(WDTO_120MS);  hang_cpu(); } // wdt_disable() should be called immediately after restart. It is done in servuce.cpp
+
 
 

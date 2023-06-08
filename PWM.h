@@ -19,7 +19,7 @@ template<class Timer> struct PWM: public Timer {
   static void Init(bool A=true, bool B=false) {
     Timer::Power(1);
     Timer::InitPWM(A,B);
-    Timer::SetPrescaler(1); // highest frequency
+    Timer::SetPrescalerI(1); // highest frequency
   } // Init
 
   // PWM(bool A=true, bool B=false) { Init(A,B); }

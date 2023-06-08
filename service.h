@@ -28,14 +28,17 @@ extern "C" int __cxa_atexit();
 /** nop for timing */
 #define NOP asm volatile ("nop\n\t")
 
-class ISR_Blocker {
-  uint8_t oldSREG;
-public:
-  ISR_Blocker(): oldSREG(SREG) { cli(); }
-  ~ISR_Blocker() { SREG = oldSREG; }
-}; // ISR_Blocker
 
-static inline void hang_cpu() { cli(); volatile uint8_t stop=1; while(stop); }
-static inline void soft_reset() { wdt_enable(WDTO_120MS);  hang_cpu(); } // wdt_disable() should be called immediately after restart. It is done in servuce.cpp
+namespace avp {
+  class ISR_Blocker {
+    uint8_t oldSREG;
+  public:
+    ISR_Blocker(): oldSREG(SREG) { cli(); }
+    ~ISR_Blocker() { SREG = oldSREG; }
+  }; // ISR_Blocker
+
+  void hang_cpu() __attribute((noreturn));
+  void soft_reset() __attribute((noreturn)); // wdt_disable() should be called immediately after restart. It is done in servuce.cpp
+}
 
 #endif /* SERVICE_H_ */

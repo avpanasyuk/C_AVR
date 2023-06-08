@@ -47,7 +47,7 @@ namespace avp {
     // do not forget global interrupt enable sei()
     inline void EnableInterrupts() { avp::set_high(ADCSRA,ADIE); }
     inline void DisableInterrupts() { avp::set_low(ADCSRA,ADIE); }
-    inline void SetPrescaler() { avp::setbits(ADCSRA,ADPS0,3,avp::CeilLog2Ratio(F_CPU,200000UL)); }
+    inline void SetPrescaler() { avp::setbits(ADCSRA,ADPS0,3,avp::CeilLog2Ratio(BaseClock,200000UL)); }
 
 
     // ******** ADCSRB *************
